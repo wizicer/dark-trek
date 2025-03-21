@@ -1,4 +1,5 @@
-import { Stage, Container } from '@pixi/react';
+import { Stage, Container, Text, Graphics } from '@pixi/react';
+import { TextStyle } from 'pixi.js';
 import { useCallback, useState, useEffect } from 'react';
 import { Planet } from './Planet.tsx';
 
@@ -8,6 +9,89 @@ interface PlanetData {
   y: number;
   radius: number;
 }
+
+const PlanetDialog = ({ planet, onClose, x, y }: { planet: number, onClose: () => void, x: number, y: number }) => {
+  return (
+    <Container position={[x, y]}>
+      <Graphics
+        draw={g => {
+          g.clear();
+          g.beginFill(0x000000, 0.8);
+          g.lineStyle(2, 0x4a5568);
+          g.drawRoundedRect(-100, -80, 200, 160, 10);
+          g.endFill();
+        }}
+      />
+      <Text
+        text={`Planet ${planet}`}
+        anchor={0.5}
+        position={[0, -50]}
+        style={
+          new TextStyle({
+            fill: 0xffffff,
+            fontSize: 18,
+            fontWeight: 'bold'
+          })
+        }
+      />
+      <Text
+        text="Resources: 1000"
+        anchor={0.5}
+        position={[0, -20]}
+        style={
+          new TextStyle({
+            fill: 0xcccccc,
+            fontSize: 14
+          })
+        }
+      />
+      <Text
+        text="Population: 500"
+        anchor={0.5}
+        position={[0, 0]}
+        style={
+          new TextStyle({
+            fill: 0xcccccc,
+            fontSize: 14
+          })
+        }
+      />
+      <Text
+        text="Defense: 75%"
+        anchor={0.5}
+        position={[0, 20]}
+        style={
+          new TextStyle({
+            fill: 0xcccccc,
+            fontSize: 14
+          })
+        }
+      />
+      <Graphics
+        draw={g => {
+          g.clear();
+          g.beginFill(0x3b82f6);
+          g.drawRoundedRect(-40, 40, 80, 30, 5);
+          g.endFill();
+        }}
+        eventMode="dynamic"
+        onclick={onClose}
+        cursor="pointer"
+      />
+      <Text
+        text="Close"
+        anchor={0.5}
+        position={[0, 55]}
+        style={
+          new TextStyle({
+            fill: 0xffffff,
+            fontSize: 14
+          })
+        }
+      />
+    </Container>
+  );
+};
 
 export const StarMap = () => {
   const [selectedPlanet, setSelectedPlanet] = useState<number | null>(null);
@@ -67,24 +151,16 @@ export const StarMap = () => {
               onHover={(isHovered: boolean) => addLog(`Planet ${planet.id} ${isHovered ? 'hovered' : 'unhovered'}`)}
             />
           ))}
+          {selectedPlanet && (
+            <PlanetDialog
+              planet={selectedPlanet}
+              onClose={() => setSelectedPlanet(null)}
+              x={dimensions.width / 2}
+              y={dimensions.height / 2}
+            />
+          )}
         </Container>
       </Stage>
-      {selectedPlanet && (
-        <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 p-6 rounded-lg shadow-lg backdrop-blur-sm border border-gray-700 bg-white/90">
-          <h2 className="text-xl text-gray-800 mb-4">Planet {selectedPlanet}</h2>
-          <div className="space-y-2 mb-4">
-            <p className="text-gray-600">Resources: 1000</p>
-            <p className="text-gray-600">Population: 500</p>
-            <p className="text-gray-600">Defense: 75%</p>
-          </div>
-          <button
-            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors"
-            onClick={() => setSelectedPlanet(null)}
-          >
-            Close
-          </button>
-        </div>
-      )}
       {showDebug && (
         <div className="fixed bottom-4 left-4 bg-gray-800/90 p-4 rounded-lg shadow-lg backdrop-blur-sm border border-gray-700">
           <h3 className="text-white font-semibold mb-2">Debug Logs</h3>
