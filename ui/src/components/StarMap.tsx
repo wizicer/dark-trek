@@ -1,8 +1,8 @@
-import { Stage, Container, Graphics } from '@pixi/react';
+import { Stage, Container } from '@pixi/react';
 import React, { useCallback, useState, useEffect } from 'react';
 import { Planet } from './Planet.tsx';
 import { PlanetDialog } from './PlanetDialog.tsx';
-import { PathPointDialog } from './PathPointDialog.tsx';
+import { PathEditor } from './PathEditor.tsx';
 import { Grid } from './Grid.tsx';
 
 interface PlanetData {
@@ -156,59 +156,18 @@ export const StarMap = () => {
           )}
           {selectingDestination && (
             <>
-              <Graphics
-                draw={g => {
-                  g.clear();
-
-                  const sourcePlanet = planets.find(p => p.id === selectedPlanet);
-                  if (!sourcePlanet) return;
-
-                  // Draw existing path
-                  g.lineStyle(2, 0x22c55e, 0.6);
-                  g.moveTo(sourcePlanet.x, sourcePlanet.y);
-                  
-                  // Draw path points and connections
-                  pathPoints.forEach((point, index) => {
-                    const prevPoint = index === 0 ? sourcePlanet : pathPoints[index - 1];
-                    g.moveTo(prevPoint.x, prevPoint.y);
-                    g.lineTo(point.x, point.y);
-                    g.beginFill(0x22c55e, 0.3);
-                    g.drawCircle(point.x, point.y, 10);
-                    g.endFill();
-                  });
-
-                  // Draw point at source planet
-                  g.beginFill(0x22c55e, 0.3);
-                  g.drawCircle(sourcePlanet.x, sourcePlanet.y, 10);
-                  g.endFill();
-
-                  // Draw preview line to hover position if valid
-                  if (hoverPosition) {
-                    const startPoint = pathPoints.length > 0 
-                      ? pathPoints[pathPoints.length - 1]
-                      : sourcePlanet;
-
-                    const dx = Math.abs(hoverPosition.x - startPoint.x);
-                    const dy = Math.abs(hoverPosition.y - startPoint.y);
-                    const isDiagonal = dx === dy;
-                    const isOrthogonal = dx === 0 || dy === 0;
-
-                    if (isDiagonal || isOrthogonal) {
-                      g.lineStyle(2, 0x22c55e, 0.3);
-                      g.moveTo(startPoint.x, startPoint.y);
-                      g.lineTo(hoverPosition.x, hoverPosition.y);
-                    }
-
-                    // Draw hover position marker
-                    g.beginFill(0x22c55e, 0.3);
-                    g.lineStyle(2, 0x22c55e);
-                    g.drawCircle(hoverPosition.x, hoverPosition.y, 20);
-                    g.endFill();
-                  }
-                }}
+              <Grid
+                width={dimensions.width}
+                height={dimensions.height}
+                cellSize={100}
+                color={0x444444}
+                alpha={0.8}
               />
-              {pathPoints.length > 0 && (
-                <PathPointDialog
+              {selectedPlanet && (
+                <PathEditor
+                  sourcePlanet={planets.find(p => p.id === selectedPlanet)!}
+                  pathPoints={pathPoints}
+                  hoverPosition={hoverPosition}
                   onSetTarget={handleSetTarget}
                   onUndo={handleUndo}
                 />
