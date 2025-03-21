@@ -3,6 +3,27 @@ use ark_ff::{Field, PrimeField};
 use ark_std::{UniformRand, str::FromStr};
 use std::time::{Duration, Instant};
 
+// Standard MiMC hash implementation
+fn mimc_hash(x: Fr, seed: Fr) -> Fr {
+    // MiMC-p/p for BN254 standard parameters
+    let rounds = 91; // Standard number of rounds for BN254
+    let mut result = x;
+    
+    for i in 0..rounds {
+        // Calculate round constant - typically precomputed constants in standard implementations
+        let c = Fr::from(i as u64);
+        
+        // Add seed and round constant
+        result += seed + c;
+        
+        // MiMC round function: x^3 (cubing is the core operation in standard MiMC)
+        result = result * result * result;
+    }
+    
+    // Finally add the input value (standard MiMC finishing step)
+    result + x
+}
+
 fn main() {
     println!("BN128 Square Root Benchmark");
     println!("===========================");
@@ -92,6 +113,46 @@ fn main() {
                 // To ensure we always have a cube root in the next iteration,
                 // we cube the result again
                 result = result * result * result;
+            }
+            
+            total_duration += start.elapsed();
+        }
+        
+        // Calculate average duration across runs
+        let avg_duration = total_duration / runs;
+        let avg_per_iteration = if iter > 0 { avg_duration / iter as u32 } else { avg_duration };
+        
+        println!(
+            "{:10} | {:10?} | {:10?}",
+            iter,
+            avg_duration,
+            avg_per_iteration
+        );
+    }
+    
+    // Benchmark for MiMC hash calculation
+    println!("\nBN128 MiMC Hash Benchmark");
+    println!("=========================");
+    println!("Running each test {} times and taking the average.", runs);
+    println!("\nIterations | Total Time | Avg Time per Iteration");
+    println!("-----------------------------------------------");
+    
+    for &iter in &iterations {
+        let mut total_duration = Duration::new(0, 0);
+        
+        for _ in 0..runs {
+            // Generate random field elements
+            let mut rng = ark_std::test_rng();
+            let input = Fr::rand(&mut rng);
+            let seed = Fr::rand(&mut rng);
+            
+            // Benchmark MiMC hash calculation
+            let start = Instant::now();
+            let mut result = input;
+            
+            for _ in 0..iter {
+                // Calculate MiMC hash
+                result = mimc_hash(result, seed);
             }
             
             total_duration += start.elapsed();
