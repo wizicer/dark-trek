@@ -8,6 +8,12 @@ interface PlanetData {
   x: number;
   y: number;
   radius: number;
+  satellites: {
+    size: number;
+    orbitRadius: number;
+    orbitTilt: number;
+    speed: number;
+  }[];
 }
 
 export const StarMap = () => {
@@ -44,7 +50,23 @@ export const StarMap = () => {
     { id: 3, x: 600, y: 400, radius: 35 },
     { id: 4, x: 800, y: 300, radius: 45 },
     { id: 5, x: 500, y: 500, radius: 38 },
-  ];
+  ].map(planet => ({
+    ...planet,
+    satellites: [
+      {
+        size: planet.radius * 0.2,
+        orbitRadius: planet.radius * 2,
+        orbitTilt: Math.random() * 60 - 30, // Random tilt between -30 and 30 degrees
+        speed: 0.02 + Math.random() * 0.02 // Random speed between 0.02 and 0.04 radians per second
+      },
+      {
+        size: planet.radius * 0.15,
+        orbitRadius: planet.radius * 3,
+        orbitTilt: Math.random() * 60 - 30,
+        speed: 0.01 + Math.random() * 0.02
+      }
+    ]
+  }));
 
   return (
     <div className="relative w-full h-full">
