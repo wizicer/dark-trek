@@ -5,11 +5,12 @@ include "../node_modules/circomlib/circuits/comparators.circom";
 include "../node_modules/circomlib/circuits/mimc.circom";
 include "../node_modules/circomlib/circuits/switcher.circom";
 include "./griffin/griffin.circom";
+include "./utils/utils.circom";
 
 // reveal circuits
-template Reveal(POINT_NUM) {
+template Reveal(POINT_NUM, MAP_WIDTH, MIMC_ROUND) {
     // private input
-    signal input positions[POINT_NUM][2];
+    signal input positions[POINT_NUM];
 
     // public input
     signal input commitment;
@@ -21,55 +22,146 @@ template Reveal(POINT_NUM) {
     signal output position_hash;
     signal output energy;
 
+    // //------------------------------------------------------------------------------
+    // // 1. verify that the commitment is valid and corresponds to the positions
+    // //------------------------------------------------------------------------------
+
     // griffin permutation
-    signal position_add_tmp[POINT_NUM];
+    signal position_griffin[POINT_NUM];
+    component griffin_perm = GriffinPermutation(POINT_NUM); 
+    griffin_perm.inp <== positions;
+    griffin_perm.out ==> position_griffin;
+
+    // get mimc hash
+    component mimc[MIMC_ROUND][POINT_NUM];
+    component num_truncate_bits[MIMC_ROUND][POINT_NUM];
+    component bits_to_num[MIMC_ROUND][POINT_NUM];
+    signal mimc_hash[POINT_NUM][MIMC_ROUND];
+    signal hash_to_bits[MIMC_ROUND][POINT_NUM][8];
+    signal bits_to_index[MIMC_ROUND][POINT_NUM];
+
+    //// for test
+    // var test_compute_bit_array[256];
+    // for (var i = 0; i < 256; i++){
+    //     test_compute_bit_array[i] = 0;
+    // }
+
     for (var i = 0; i < POINT_NUM; i++){
-        position_add_tmp[i] <== positions[i][0] + positions[i][1];
+        mimc[0][i] = MiMC7(91);
+        mimc[0][i].x_in <== position_griffin[i];
+        mimc[0][i].k <== salt;
+        mimc[0][i].out ==> mimc_hash[i][0];
+
+        // transform hash to bits
+        // take the first 8 bits from the hash
+        num_truncate_bits[0][i] = NumTruncateBits(8);
+        num_truncate_bits[0][i].in <== mimc_hash[i][0];
+        num_truncate_bits[0][i].out ==> hash_to_bits[0][i];
+    
+        // transform bits to index
+        bits_to_num[0][i] = Bits2Num(8);
+        bits_to_num[0][i].in <== hash_to_bits[0][i];
+        bits_to_num[0][i].out ==> bits_to_index[0][i];
+
+        // test_compute_bit_array[bits_to_index[0][i]] = 1;
     }
 
-    signal position_griffin_tmp[POINT_NUM];
-    component griffin_perm = GriffinPermutation(POINT_NUM);
-    griffin_perm.inp <== position_add_tmp;
-    griffin_perm.out ==> position_griffin_tmp;
+    for (var round = 1; round < MIMC_ROUND; round++){
+        for (var i = 0; i < POINT_NUM; i++){
+            mimc[round][i] = MiMC7(91);
+            mimc[round][i].x_in <== position_griffin[i];
+            mimc[round][i].k <== mimc_hash[i][round - 1];
+            mimc[round][i].out ==> mimc_hash[i][round];
 
-    
-    // verify the position is valid
-    signal flag[POINT_NUM - 1][2];
-    signal next_position_temp[POINT_NUM - 1][2][2];
-    signal accum_next_position[POINT_NUM - 1][2];
-    signal check_temp[POINT_NUM - 1][2];
+            // transform hash to bits
+            // take the first 8 bits from the hash
+            num_truncate_bits[round][i] = NumTruncateBits(8);
+            num_truncate_bits[round][i].in <== mimc_hash[i][round];
+            num_truncate_bits[round][i].out ==> hash_to_bits[round][i];
+        
+            // transform bits to index
+            bits_to_num[round][i] = Bits2Num(8);
+            bits_to_num[round][i].in <== hash_to_bits[round][i];
+            bits_to_num[round][i].out ==> bits_to_index[round][i];
+
+            // for test
+            // test_compute_bit_array[bits_to_index[round][i]] = 1;
+        }
+    }
+
+    // // ------------------------------------------------------------------------------
+    // // for test
+    // var test_compute_bit_array_num = 0;
+    // var e2 = 1;
+    // for (var i = 0; i<256; i++) {
+    //     test_compute_bit_array_num += test_compute_bit_array[i] * e2;
+    //     e2 = e2 + e2;
+    // }
+    // log("test_compute_bit_array_num", test_compute_bit_array_num);
+    // // ------------------------------------------------------------------------------   
+
+    // check the bits_to_index is corresponding to the commitment
+    signal acc_bits_to_index[256][MIMC_ROUND][POINT_NUM + 1];
+    signal acc_bits_to_index_temp[256][MIMC_ROUND][POINT_NUM];
+    signal bit_array[256];
+    signal bit_array_temp[256][MIMC_ROUND + 1];
+    signal bit_array_is_zero[256];
+
+    for (var i = 0; i < 256; i++) {
+        bit_array_temp[i][0] <== 0;
+        for (var round = 0; round < MIMC_ROUND; round++) {
+            acc_bits_to_index[i][round][0] <== 0;
+            for (var j = 0; j < POINT_NUM; j++) {
+                // log("i:", i);
+                // log("round:", round);
+                // log("j:", j);
+                // log("bits_to_index[round][j]:", bits_to_index[round][j]);
+                acc_bits_to_index_temp[i][round][j] <== IsZero()(i - bits_to_index[round][j]);
+                // log("acc_bits_to_index_temp[i][round][j]", acc_bits_to_index_temp[i][round][j]);
+                acc_bits_to_index[i][round][j + 1] <== acc_bits_to_index[i][round][j] + acc_bits_to_index_temp[i][round][j];
+            }
+            bit_array_temp[i][round + 1] <== bit_array_temp[i][round] + acc_bits_to_index[i][round][POINT_NUM];
+        }
+        bit_array_is_zero[i] <== IsZero()(bit_array_temp[i][MIMC_ROUND]);
+        bit_array[i] <== 1 - bit_array_is_zero[i];
+        // log("i:", i);
+        // log("bit_array[i]", bit_array[i]);
+    }
+
+    signal bit_array_num;
+    component bits2num = Bits2Num(256);
+    bits2num.in <== bit_array;
+    bits2num.out ==> bit_array_num;
+    log("bit_array_num", bit_array_num);
+    log("commitment", commitment);
+    // check if bit_array_num is equal to commitment
+    signal result <== IsZero()(bit_array_num - commitment);
+    result === 0;
+    // bit_array_num === commitment;
+
+    //------------------------------------------------------------------------------
+    // 2. verify the position is valid
+    //------------------------------------------------------------------------------
+    signal accum_sum_path[POINT_NUM - 1][5];
+    signal accum_sum_path_temp[POINT_NUM - 1][4];
 
     for (var i = 0; i < POINT_NUM - 1; i++){
-        flag[i][0] <== IsZero()(positions[i][0]);
-        flag[i][1] <== IsZero()(positions[i][1]);
+        accum_sum_path[i][0] <== 0;
+        
+        accum_sum_path_temp[i][0] <== IsZero()(positions[i] - positions[i + 1] + 1);
+        accum_sum_path[i][1] <== accum_sum_path[i][0] + accum_sum_path_temp[i][0];
 
-        var accum_temp_0 = 0;
-        var accum_temp_1 = 0;
-        // x_{i + 1} = x_{i} + 1
-        next_position_temp[i][0][0] <== IsZero()(positions[i + 1][0] - positions[i][0] - 1); 
-        accum_temp_0 += next_position_temp[i][0][0];
-        // x_{i + 1} = x_{i} - 1
-        next_position_temp[i][0][1] <== IsZero()(positions[i + 1][0] - positions[i][0] + 1); 
-        accum_temp_0 += next_position_temp[i][0][1];
-        // y_{i + 1} = y_{i} + 1
-        next_position_temp[i][1][0] <== IsZero()(positions[i + 1][1] - positions[i][1] - 1); 
-        accum_temp_1 += next_position_temp[i][1][0];
-        // y_{i + 1} = y_{i} - 1
-        next_position_temp[i][1][1] <== IsZero()(positions[i + 1][1] - positions[i][1] + 1);
-        accum_temp_1 += next_position_temp[i][1][1];
+        accum_sum_path_temp[i][1] <== IsZero()(positions[i] - positions[i + 1] - 1);
+        accum_sum_path[i][2] <== accum_sum_path[i][1] + accum_sum_path_temp[i][1];
 
-        accum_next_position[i][0] <== accum_temp_0;
-        accum_next_position[i][1] <== accum_temp_1;
+        accum_sum_path_temp[i][2] <== IsZero()(positions[i] - positions[i + 1] - MAP_WIDTH);
+        accum_sum_path[i][3] <== accum_sum_path[i][2] + accum_sum_path_temp[i][2];
 
-        // log("accum_next_position[i][0]:", accum_next_position[i][0]);
-        // log(accum_next_position[i][1]);
-        // log("accum_temp_0", accum_temp_0);
-        // log(accum_temp_1);
-        check_temp[i][0] <== (1 - flag[i][0]) * accum_next_position[i][0];
-        check_temp[i][1] <== (1 - flag[i][1]) * accum_next_position[i][1];
-        check_temp[i][0] + check_temp[i][1] === 1;
+        accum_sum_path_temp[i][3] <== IsZero()(positions[i] - positions[i + 1] + MAP_WIDTH);
+        accum_sum_path[i][4] <== accum_sum_path[i][3] + accum_sum_path_temp[i][3];
 
+        accum_sum_path[i][4] === 1;
     }
 }
 
-component main {public [commitment,duration, pk, salt, target_occupied]} = Reveal(3);
+component main {public [commitment, duration, pk, salt, target_occupied]} = Reveal(3, 4, 2);
