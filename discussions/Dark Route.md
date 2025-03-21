@@ -123,3 +123,39 @@ Set $C=ACC(\{H(p_0), H(p_1), \dots, H(p_n)\})$
 
 第二层基于第一层的hash进行k次hash，因此使用简单的变换，考虑使用基础的加法和乘法进行。
 
+**参考：**
+
+- [griffin](https://github.com/bkomuves/hash-circuits/tree/master/circuits/griffin)
+
+
+
+## 🚀 参赛计划
+
+https://ethglobal.com/events/trifecta/prizes
+
+### 一、Aztec
+
+**赞助商对象：** Aztec  
+**赛道：** 🥷 **Best Use of Noir**  
+- 第一名 $1,500  
+- 第二名 $1,000  
+
+**获奖要求：**  
+
+- 使用 Noir 语言实现零知识证明功能，构建创新的链上游戏场景。
+- 项目体现 Noir 的技术优势，并阐述 Noir 在应用中的关键作用。
+- 鼓励（非必须）使用 Noir 库（如 noir-jwt、zkEmail）或实现跨链功能来获得加分。
+
+---
+
+### 二、t1 Protocol
+
+**赞助商对象：** t1 Protocol  
+**赛道：** 🏎️ **Best use of 𝚝𝟷**  
+- 第一名 $1,500  
+- 第二名 $1,000  
+
+**获奖要求：**  
+- 在 t1 Protocol 的 Devnet 上部署你的链上游戏。
+- 利用 t1 Protocol 提供的实时证明（Real-time Proving）技术提升游戏用户体验。
+- 提交材料需明确说明为何选择 t1 Protocol，以及其技术如何为项目体验带来实质性提升。
