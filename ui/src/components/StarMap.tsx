@@ -2,6 +2,7 @@ import { Stage, Container, Graphics } from '@pixi/react';
 import React, { useCallback, useState, useEffect } from 'react';
 import { Planet } from './Planet.tsx';
 import { PlanetDialog } from './PlanetDialog.tsx';
+import { PathPointDialog } from './PathPointDialog.tsx';
 import { Grid } from './Grid.tsx';
 
 interface PlanetData {
@@ -17,14 +18,19 @@ interface PlanetData {
   }[];
 }
 
+interface PathPoint {
+  x: number;
+  y: number;
+}
+
 export const StarMap = () => {
   const [selectedPlanet, setSelectedPlanet] = useState<number | null>(null);
   const [selectingDestination, setSelectingDestination] = useState(false);
-  const [hoverPosition, setHoverPosition] = useState<{ x: number, y: number } | null>(null);
+  const [hoverPosition, setHoverPosition] = useState<PathPoint | null>(null);
+  const [pathPoints, setPathPoints] = useState<PathPoint[]>([]);
   const [showDebug] = useState(false);
   const [dimensions, setDimensions] = useState({ width: window.innerWidth, height: window.innerHeight });
   const [logs, setLogs] = useState<string[]>([]);
-
   const planets: PlanetData[] = [
     { id: 1, x: 200, y: 200, radius: 30 },
     { id: 2, x: 400, y: 300, radius: 40 },
@@ -84,17 +90,45 @@ export const StarMap = () => {
 
   const handleStageClick = useCallback(() => {
     if (!selectingDestination || !hoverPosition) return;
-    
-    const sourcePlanet = planets.find(p => p.id === selectedPlanet);
-    if (!sourcePlanet) return;
 
-    addLog(`Send from Planet ${selectedPlanet} to (${hoverPosition.x}, ${hoverPosition.y})`);
-    // TODO: Handle send event
+    const sourcePlanet = planets.find(p => p.id === selectedPlanet);
+    if (!sourcePlanet && pathPoints.length === 0) return;
+
+    const startPoint = pathPoints.length === 0 
+      ? { x: sourcePlanet!.x, y: sourcePlanet!.y }
+      : pathPoints[pathPoints.length - 1];
+
+    // Check if the new point creates a valid 8-directional path
+    const dx = Math.abs(hoverPosition.x - startPoint.x);
+    const dy = Math.abs(hoverPosition.y - startPoint.y);
+    const isDiagonal = dx === dy;
+    const isOrthogonal = dx === 0 || dy === 0;
+
+    if (isDiagonal || isOrthogonal) {
+      setPathPoints(prev => [...prev, { ...hoverPosition }]);
+      addLog(`Added path point at (${hoverPosition.x}, ${hoverPosition.y})`);
+    }
+  }, [selectingDestination, hoverPosition, selectedPlanet, planets, pathPoints, addLog]);
+
+  const handleSetTarget = useCallback(() => {
+    if (pathPoints.length === 0) return;
+
+    addLog(`Set target with path: ${pathPoints.map(p => `(${p.x},${p.y})`).join(' -> ')}`);
+    // TODO: Handle send event with complete path
     
     setSelectingDestination(false);
     setSelectedPlanet(null);
+    setPathPoints([]);
     setHoverPosition(null);
-  }, [selectingDestination, hoverPosition, selectedPlanet, planets, addLog]);
+  }, [pathPoints, addLog]);
+
+  const handleUndo = useCallback(() => {
+    setPathPoints(prev => {
+      if (prev.length === 0) return prev;
+      return prev.slice(0, -1);
+    });
+    addLog('Undid last path point');
+  }, [addLog]);
 
   return (
     <div className="relative w-full h-full">
@@ -120,32 +154,68 @@ export const StarMap = () => {
               alpha={0.8}
             />
           )}
-          {selectingDestination && hoverPosition && (
+          {selectingDestination && (
             <>
               <Graphics
                 draw={g => {
                   g.clear();
+
                   const sourcePlanet = planets.find(p => p.id === selectedPlanet);
                   if (!sourcePlanet) return;
-                  
-                  // Draw line from source to destination
+
+                  // Draw existing path
                   g.lineStyle(2, 0x22c55e, 0.6);
                   g.moveTo(sourcePlanet.x, sourcePlanet.y);
-                  g.lineTo(hoverPosition.x, hoverPosition.y);
-                }}
-              />
-              <Graphics
-                draw={g => {
-                  g.clear();
+                  
+                  // Draw path points and connections
+                  pathPoints.forEach((point, index) => {
+                    const prevPoint = index === 0 ? sourcePlanet : pathPoints[index - 1];
+                    g.moveTo(prevPoint.x, prevPoint.y);
+                    g.lineTo(point.x, point.y);
+                    g.beginFill(0x22c55e, 0.3);
+                    g.drawCircle(point.x, point.y, 10);
+                    g.endFill();
+                  });
+
+                  // Draw point at source planet
                   g.beginFill(0x22c55e, 0.3);
-                  g.lineStyle(2, 0x22c55e);
-                  g.drawCircle(hoverPosition.x, hoverPosition.y, 20);
+                  g.drawCircle(sourcePlanet.x, sourcePlanet.y, 10);
                   g.endFill();
+
+                  // Draw preview line to hover position if valid
+                  if (hoverPosition) {
+                    const startPoint = pathPoints.length > 0 
+                      ? pathPoints[pathPoints.length - 1]
+                      : sourcePlanet;
+
+                    const dx = Math.abs(hoverPosition.x - startPoint.x);
+                    const dy = Math.abs(hoverPosition.y - startPoint.y);
+                    const isDiagonal = dx === dy;
+                    const isOrthogonal = dx === 0 || dy === 0;
+
+                    if (isDiagonal || isOrthogonal) {
+                      g.lineStyle(2, 0x22c55e, 0.3);
+                      g.moveTo(startPoint.x, startPoint.y);
+                      g.lineTo(hoverPosition.x, hoverPosition.y);
+                    }
+
+                    // Draw hover position marker
+                    g.beginFill(0x22c55e, 0.3);
+                    g.lineStyle(2, 0x22c55e);
+                    g.drawCircle(hoverPosition.x, hoverPosition.y, 20);
+                    g.endFill();
+                  }
                 }}
               />
+              {pathPoints.length > 0 && (
+                <PathPointDialog
+                  onSetTarget={handleSetTarget}
+                  onUndo={handleUndo}
+                />
+              )}
             </>
           )}
-          {planets.map((planet) => (
+          {planets.map(planet => (
             <Planet
               key={planet.id}
               {...planet}
@@ -158,7 +228,10 @@ export const StarMap = () => {
             <PlanetDialog
               planet={selectedPlanet}
               onClose={() => setSelectedPlanet(null)}
-              onSend={() => setSelectingDestination(true)}
+              onSend={() => {
+                setSelectingDestination(true);
+                setPathPoints([]);
+              }}
               x={(planets.find(p => p.id === selectedPlanet)?.x ?? 0) + 120}
               y={planets.find(p => p.id === selectedPlanet)?.y ?? 0}
             />
@@ -166,13 +239,10 @@ export const StarMap = () => {
         </Container>
       </Stage>
       {showDebug && (
-        <div className="fixed bottom-4 left-4 bg-gray-800/90 p-4 rounded-lg shadow-lg backdrop-blur-sm border border-gray-700">
-          <h3 className="text-white font-semibold mb-2">Debug Logs</h3>
-          <div className="space-y-1">
-            {logs.map((log, i) => (
-              <p key={i} className="text-gray-300 text-sm font-mono">{log}</p>
-            ))}
-          </div>
+        <div className="absolute bottom-0 left-0 bg-black bg-opacity-50 text-white p-2">
+          {logs.map((log, index) => (
+            <div key={index}>{log}</div>
+          ))}
         </div>
       )}
     </div>

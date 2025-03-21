@@ -108,6 +108,7 @@ export const Planet = ({ x, y, radius, selected, onClick, onHover, satellites = 
   return (
     <Graphics 
       draw={draw}
+      alpha={0.8}
       eventMode="dynamic"
       cursor="pointer"
       pointertap={onClick}
