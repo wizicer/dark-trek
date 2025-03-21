@@ -108,7 +108,18 @@ Given $ACC(\cdot)$ is a RSA accumulator
 Set $C=ACC(\{H(p_0), H(p_1), \dots, H(p_n)\})$ 
 
 
+## 核心挑战
 
+如果用naive的方式进行电路证明，当bloom filter的k=6时，每个点需要进行7次hash（对点的hash，以及6次 bloom filter的hash），假如使用MiMC Hash，每次Hash需要330个约束，想要在100k约束内实现，最多可以容纳$\frac{100k}{330 \times 7} \approx 43$个点，对游戏来说，这个限制太大了。
 
+本次工作的重点也就在如何拓展可容纳的点数。
 
+我们需要进行两层hash：
+
+- 第一层：将点加盐Hash
+- 第二层：将第一层的hash进行k次hash并映射到bloom filter
+
+考虑到我们重点关注点非hash函数的防碰撞性和机密性，因此考虑选择griffin permutation作为一层的hash函数。
+
+第二层基于第一层的hash进行k次hash，因此使用简单的变换，考虑使用基础的加法和乘法进行。
 
