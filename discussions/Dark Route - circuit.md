@@ -53,26 +53,49 @@ Reveal 电路
 	
 - 限制输入的 target occupied 为 bit
 
+
 - mmic 太大
 - insert 
 - k 次哈希，加法乘法
 
-Griffin 算法：[Horst](https://eprint.iacr.org/2022/403.pdf)
 
-添加VDF，input
+## 技术选型
+
+### Griffin
+
+参考资料：
+- Griffin 算法论文：[Horst](https://eprint.iacr.org/2022/403.pdf)
+
+### VDF
+
+参考资料：
+- VDF文章介绍: [研究  可验证延迟函数（VDF）（一）一文搞懂 VDF](https://blog.priewienv.me/post/verifiable-delay-function-1/)
+- VDF 论文：[VDF](https://eprint.iacr.org/2018/601.pdf)
+
+若添加VDF，input 改为
 - position 
 - VDFH(position)
 - VDF_proof(position)
 电路里验证比较快
 
-## 技术选型
+### Sloth
 
-- VDF: [研究  可验证延迟函数（VDF）（一）一文搞懂 VDF](https://blog.priewienv.me/post/verifiable-delay-function-1/)
+sloth 方案：验证比较快
 
-VDF 能够抵抗并行计算加速，这意味着为了计算 VDF，应当完成一系列串行才能完成的任务，后一个任务必须依赖于前一个任务。这时，对哈希函数有所了解的读者可能会想到一种方案：连续将一个输入哈希 t 次。这样的方案的确是无法通过并行算法显著地加速的，但是这样得到的结果，其验证将会非常没有效率：验证者需要重复哈希 t 次的计算，即使保留一些中间结果，验证的工作量和计算的工作量也是常数级别的差距。从这个例子我们可以看出，在这样的定义下，可验证延迟函数的构造并没有想象中的那么简单。
+**讨论：有限域中实现 $\sqrt{x}$ 的效率？** 
+这个问题实际就是求解二次剩余。
 
+效率总结
+- **奇素数域 $\mathbb{F}_p$​**：
+    - 如果 $p≡3\mod  4$，使用幂运算 $a^{(p+1)/4}$ 是最快的。时间复杂度为 $O(\log p)$
+    - 否则，Tonelli-Shanks ($O(\log^2p)$ 或者 $O(\log p)$) 或 Cipolla 算法是常用选择。
+- **特征为 2 的域 $\mathbb{F}_{2^n}$​**：
+    - 平方根计算通常更高效，可以利用域的特殊性质。
+- **小规模域**：
+    - 查表法是最快的。
 
-
+- Tonelli-Shanks 的 python 实现：[Tonelli-Shanks算法\_python-CSDN博客](https://blog.csdn.net/qq_51999772/article/details/122642868)
+- 计算二次剩余的算法描述：[二次剩余 - OI Wiki](https://oi-wiki.org/math/number-theory/quad-residue/)
 
 ## 电路运行
 
@@ -141,8 +164,6 @@ snarkjs groth16 prove reveal_0000.zkey ./reveal_js/witness.wtns ./proof/proof.js
 
 - `proof.json`: 它包含了证明
 - `public.json`: 它包含公共输入和输出的值。
-
-
 
 参考文档：
 - [构建你的第一个零知识 snark 电路（Circom2） — W3.Hitchhiker](https://w3hitchhiker.mirror.xyz/BHJ9fqXMABXspaFxbaDbt9c-PvrQLdi77OjN6Au9YqU)
