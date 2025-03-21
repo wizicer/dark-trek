@@ -123,3 +123,4 @@ Set $C=ACC(\{H(p_0), H(p_1), \dots, H(p_n)\})$
 
 第二层基于第一层的hash进行k次hash，因此使用简单的变换，考虑使用基础的加法和乘法进行。
 
+- [griffin](https://github.com/bkomuves/hash-circuits/tree/master/circuits/griffin)
