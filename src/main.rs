@@ -13,8 +13,11 @@ fn main() {
     // Number of runs for each iteration count (to get more stable results)
     let runs = 5;
     
-    println!("Iterations | Total Time | Avg Time per Iteration");
+    println!("Running each test {} times and taking the average.", runs);
+    println!("\nIterations | Total Time | Avg Time per Iteration");
     println!("-----------------------------------------------");
+    
+    let total_benchmark_start = Instant::now();
     
     for &iter in &iterations {
         let mut total_duration = Duration::new(0, 0);
@@ -53,37 +56,6 @@ fn main() {
         );
     }
     
-    // Additional test with a fixed value
-    println!("\nBenchmark with fixed value:");
-    println!("Iterations | Total Time | Avg Time per Iteration");
-    println!("-----------------------------------------------");
-    
-    let fixed_iterations = 1000;
-    let mut total_duration = Duration::new(0, 0);
-    
-    for _ in 0..runs {
-        // Use a fixed value that we know has a square root (4 as a field element)
-        let mut x = Fr::from(4u64);  // 4 = 2² so it has a square root
-        
-        let start = Instant::now();
-        
-        for _ in 0..fixed_iterations {
-            x = x.sqrt().unwrap();
-            // Ensure the next value has a square root
-            x = x * x;
-        }
-        
-        total_duration += start.elapsed();
-    }
-    
-    // Calculate average duration across runs
-    let avg_duration = total_duration / runs;
-    let avg_per_iteration = avg_duration / fixed_iterations as u32;
-    
-    println!(
-        "{:10} | {:10?} | {:10?} (fixed value)",
-        fixed_iterations,
-        avg_duration,
-        avg_per_iteration
-    );
+    let total_benchmark_time = total_benchmark_start.elapsed();
+    println!("\nTotal benchmark time: {:?}", total_benchmark_time);
 }
