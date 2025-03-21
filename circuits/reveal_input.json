@@ -1,0 +1,22 @@
+{
+  "positions": [
+    [1,2],
+    [2,2],
+    [2,3]
+  ],
+  "commitment": [
+    123
+  ],
+  "duration": [
+    2
+  ],
+  "pk": [
+    23
+  ],
+  "salt": [
+    12
+  ],
+  "target_occupied": [
+    1
+  ]
+}
