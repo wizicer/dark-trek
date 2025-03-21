@@ -70,12 +70,12 @@ export const StarMap = () => {
         </Container>
       </Stage>
       {selectedPlanet && (
-        <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-gray-800/90 p-6 rounded-lg shadow-lg backdrop-blur-sm border border-gray-700">
-          <h2 className="text-xl text-white mb-4">Planet {selectedPlanet}</h2>
+        <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 p-6 rounded-lg shadow-lg backdrop-blur-sm border border-gray-700 bg-white/90">
+          <h2 className="text-xl text-gray-800 mb-4">Planet {selectedPlanet}</h2>
           <div className="space-y-2 mb-4">
-            <p className="text-gray-300">Resources: 1000</p>
-            <p className="text-gray-300">Population: 500</p>
-            <p className="text-gray-300">Defense: 75%</p>
+            <p className="text-gray-600">Resources: 1000</p>
+            <p className="text-gray-600">Population: 500</p>
+            <p className="text-gray-600">Defense: 75%</p>
           </div>
           <button
             className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors"
