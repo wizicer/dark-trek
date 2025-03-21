@@ -1,5 +1,6 @@
 use ark_bn254::Fr;
-use ark_ff::{Field, PrimeField, SquareRootField};
+use ark_ff::Field;
+use ark_std::UniformRand;
 use std::time::{Duration, Instant};
 
 fn main() {
@@ -19,16 +20,22 @@ fn main() {
         let mut total_duration = Duration::new(0, 0);
         
         for _ in 0..runs {
-            // Generate a random field element
-            let x = Fr::rand(&mut ark_std::test_rng());
+            // Generate a random field element that is a perfect square
+            let mut rng = ark_std::test_rng();
+            let y = Fr::rand(&mut rng);
+            let x = y * y;  // x is guaranteed to be a perfect square
             
             // Benchmark square root calculation
             let start = Instant::now();
             let mut result = x;
             
             for _ in 0..iter {
-                // Calculate square root
+                // Calculate square root - we know it exists because we constructed it as a square
                 result = result.sqrt().unwrap();
+                
+                // To ensure we always have a square root in the next iteration,
+                // we square the result again
+                result = result * result;
             }
             
             total_duration += start.elapsed();
@@ -55,13 +62,15 @@ fn main() {
     let mut total_duration = Duration::new(0, 0);
     
     for _ in 0..runs {
-        // Use a fixed value (2 as a field element)
-        let mut x = Fr::from(2u64);
+        // Use a fixed value that we know has a square root (4 as a field element)
+        let mut x = Fr::from(4u64);  // 4 = 2² so it has a square root
         
         let start = Instant::now();
         
         for _ in 0..fixed_iterations {
             x = x.sqrt().unwrap();
+            // Ensure the next value has a square root
+            x = x * x;
         }
         
         total_duration += start.elapsed();
