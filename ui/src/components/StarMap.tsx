@@ -2,6 +2,7 @@ import { Stage, Container } from '@pixi/react';
 import { useCallback, useState, useEffect } from 'react';
 import { Planet } from './Planet.tsx';
 import { PlanetDialog } from './PlanetDialog.tsx';
+import { Grid } from './Grid.tsx';
 
 interface PlanetData {
   id: number;
@@ -72,7 +73,7 @@ export const StarMap = () => {
     <div className="relative w-full h-full">
       <Stage 
         width={dimensions.width} 
-        height={dimensions.height-400} 
+        height={dimensions.height} 
         options={{ 
           backgroundColor: 0x000000,
           resolution: window.devicePixelRatio || 1,
@@ -81,6 +82,15 @@ export const StarMap = () => {
         }}
       >
         <Container eventMode="dynamic" interactiveChildren={true}>
+          {selectedPlanet && (
+            <Grid
+              width={dimensions.width}
+              height={dimensions.height}
+              cellSize={100}
+              color={0x444444}
+              alpha={0.8}
+            />
+          )}
           {planets.map((planet) => (
             <Planet
               key={planet.id}
