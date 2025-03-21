@@ -40,8 +40,6 @@ export const Planet = ({ x, y, radius, selected, onClick, onHover }: PlanetProps
       
           g.moveTo(startX, startY);
           g.arc(x, y, radius + 100, startAngle, endAngle);
-          
-          console.log("line", i, startAngle, endAngle);
         }
       }
     }
