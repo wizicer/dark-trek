@@ -3,6 +3,8 @@ import { Graphics as PixiGraphics } from 'pixi.js';
 import { useState, useEffect, useCallback } from 'react';
 import "@pixi/events";
 
+const ENABLE_SATELLITE_ANIMATION = false; // Switch to control satellite animation
+
 interface SatelliteConfig {
   size: number;
   orbitRadius: number;
@@ -30,7 +32,7 @@ export const Planet = ({ x, y, radius, selected, onClick, onHover, satellites = 
   };
 
   useEffect(() => {
-    if (satellites.length === 0) return;
+    if (!ENABLE_SATELLITE_ANIMATION || satellites.length === 0) return;
 
     const interval = setInterval(() => {
       setSatelliteAngles(prevAngles => 
