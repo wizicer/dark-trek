@@ -7,7 +7,6 @@ Reveal 电路
 - in
 	- private positions[] 
 		- 表示的是承诺的一个路径，位置坐标，从 A 到 B，一次途径的所有坐标点。
-
 		$$
 		p_0 \rightarrow p_1 \rightarrow \ldots \rightarrow p_{n-1}
 		$$
@@ -46,17 +45,46 @@ Reveal 电路
 		- 表示消耗的 energy
 
 电路约束
-
-- position 之间是相连的
 - positions 和 commitment 是对应的
-	- positions 计算出的结果和 commitment 一致
-	
 - 限制输入的 target occupied 为 bit
+- positions 之间是相连的
+- energy 是根据duration/occupied计算出来的
+- 输出的 position hash 是根据 duration 得到的
+
+### 约束 positions 和 commitment
+
+在电路中根据 positions 计算出一个 commitment，约束其与输入的 commitment 一致。
+
+![](./dark-route-bloom-filter.svg)
 
 
 - mmic 太大
 - insert 
 - k 次哈希，加法乘法
+
+### 约束 positions
+
+- private positions[] 
+表示的是承诺的一个路径，位置坐标，从 A 到 B，一次途径的所有坐标点。
+		$$
+		p_0 \rightarrow p_1 \rightarrow \ldots \rightarrow p_{n-1}
+		$$
+			$$
+			(x_0,y_0) \rightarrow (x_1, y_1) \rightarrow \ldots \rightarrow (x_{n-1}, y_{n-1})
+			$$
+
+需要约束两点之间是相邻的，即
+
+```
+// 如果前一个横坐标和后一个点的横坐标不相等，则为 1，否则为 0
+flag_x = 1 - IsZero(x_i, x_{i+1})
+// 如果前一个纵坐标和后一个点的纵坐标不相等，则为 1，否则为 0
+flag_y = 1 - IsZero(y_i, y_{i+1})
+```
+
+如果 $x_i \neq x_{i+1}$ ，那么只能是下面两种情况之一：
+1. $x_i = x_{i + 1} - 1$
+2. $x_i = x_{i + 1} + 1$
 
 
 ## 技术选型
@@ -195,3 +223,4 @@ Bloom filter 算法：
 
 - circom 实现的 hash 库： [GitHub - bkomuves/hash-circuits: Hashing circuits implemented in circom](https://github.com/bkomuves/hash-circuits)
 - circomlib 官方库：[GitHub - iden3/circomlib: Library of basic circuits for circom](https://github.com/iden3/circomlib)
+- mimc rust 实现代码：[GitHub - arnaucube/mimc-rs: MiMC hash function](https://github.com/arnaucube/mimc-rs)
