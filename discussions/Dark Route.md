@@ -15,7 +15,7 @@ Dark Forest创造了全链游戏的fog of war，但是它的fog一旦uncover，�
 
 ## 接口
 
-![](route_example.svg)
+![](route_example.drawio.svg)
 
 ### Blockchain
 
