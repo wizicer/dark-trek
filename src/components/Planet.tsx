@@ -47,7 +47,6 @@ export const Planet = ({ x, y, radius, selected, onClick, onHover }: PlanetProps
       pointertap={onClick}
       pointerover={() => handleHoverChange(true)}
       pointerout={() => handleHoverChange(false)}
-      interactive
     />
   );
 };

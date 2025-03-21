@@ -11,6 +11,7 @@ interface PlanetData {
 
 export const StarMap = () => {
   const [selectedPlanet, setSelectedPlanet] = useState<number | null>(null);
+  const [showDebug] = useState(false);
   const [dimensions, setDimensions] = useState({ width: window.innerWidth, height: window.innerHeight });
   const [logs, setLogs] = useState<string[]>([]);
 
@@ -84,14 +85,16 @@ export const StarMap = () => {
           </button>
         </div>
       )}
-      <div className="fixed bottom-4 left-4 bg-gray-800/90 p-4 rounded-lg shadow-lg backdrop-blur-sm border border-gray-700">
-        <h3 className="text-white font-semibold mb-2">Debug Logs</h3>
-        <div className="space-y-1">
-          {logs.map((log, i) => (
-            <p key={i} className="text-gray-300 text-sm font-mono">{log}</p>
-          ))}
+      {showDebug && (
+        <div className="fixed bottom-4 left-4 bg-gray-800/90 p-4 rounded-lg shadow-lg backdrop-blur-sm border border-gray-700">
+          <h3 className="text-white font-semibold mb-2">Debug Logs</h3>
+          <div className="space-y-1">
+            {logs.map((log, i) => (
+              <p key={i} className="text-gray-300 text-sm font-mono">{log}</p>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };
