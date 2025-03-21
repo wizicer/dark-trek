@@ -94,8 +94,8 @@ export const StarMap = () => {
             <PlanetDialog
               planet={selectedPlanet}
               onClose={() => setSelectedPlanet(null)}
-              x={dimensions.width / 2}
-              y={dimensions.height / 2}
+              x={(planets.find(p => p.id === selectedPlanet)?.x ?? 0) + 120} 
+              y={planets.find(p => p.id === selectedPlanet)?.y ?? 0}
             />
           )}
         </Container>
