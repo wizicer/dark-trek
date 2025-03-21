@@ -1,5 +1,5 @@
-import { Stage, Container } from '@pixi/react';
-import { useCallback, useState, useEffect } from 'react';
+import { Stage, Container, Graphics } from '@pixi/react';
+import React, { useCallback, useState, useEffect } from 'react';
 import { Planet } from './Planet.tsx';
 import { PlanetDialog } from './PlanetDialog.tsx';
 import { Grid } from './Grid.tsx';
@@ -19,31 +19,11 @@ interface PlanetData {
 
 export const StarMap = () => {
   const [selectedPlanet, setSelectedPlanet] = useState<number | null>(null);
+  const [selectingDestination, setSelectingDestination] = useState(false);
+  const [hoverPosition, setHoverPosition] = useState<{ x: number, y: number } | null>(null);
   const [showDebug] = useState(false);
   const [dimensions, setDimensions] = useState({ width: window.innerWidth, height: window.innerHeight });
   const [logs, setLogs] = useState<string[]>([]);
-
-  const addLog = useCallback((message: string) => {
-    setLogs(prev => [...prev.slice(-4), `[${new Date().toLocaleTimeString()}] ${message}`]);
-  }, []);
-
-  useEffect(() => {
-    const handleResize = () => {
-      const newDimensions = { width: window.innerWidth, height: window.innerHeight };
-      setDimensions(newDimensions);
-      addLog(`Window resized: ${newDimensions.width}x${newDimensions.height}`);
-    };
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, [addLog]);
-
-  const handlePlanetClick = useCallback((id: number) => {
-    setSelectedPlanet(prev => {
-      const newValue = prev === id ? null : id;
-      addLog(`Planet ${id} ${newValue === null ? 'deselected' : 'selected'}`);
-      return newValue;
-    });
-  }, [addLog]);
 
   const planets: PlanetData[] = [
     { id: 1, x: 200, y: 200, radius: 30 },
@@ -57,8 +37,8 @@ export const StarMap = () => {
       {
         size: planet.radius * 0.2,
         orbitRadius: planet.radius * 2,
-        orbitTilt: Math.random() * 60 - 30, // Random tilt between -30 and 30 degrees
-        speed: 0.02 + Math.random() * 0.02 // Random speed between 0.02 and 0.04 radians per second
+        orbitTilt: Math.random() * 60 - 30,
+        speed: 0.02 + Math.random() * 0.02
       },
       {
         size: planet.radius * 0.15,
@@ -68,6 +48,53 @@ export const StarMap = () => {
       }
     ]
   }));
+
+  const addLog = useCallback((message: string) => {
+    setLogs(prev => [...prev.slice(-4), `[${new Date().toLocaleTimeString()}] ${message}`]);
+    console.log(message);
+  }, []);
+
+  useEffect(() => {
+    const handleResize = () => {
+      const newDimensions = { width: window.innerWidth, height: window.innerHeight };
+      setDimensions(newDimensions);
+      addLog(`Window resized: ${newDimensions.width}x${newDimensions.height}`);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [addLog]);
+
+  const handlePlanetClick = useCallback((id: number) => {
+    if (selectingDestination) return;
+    setSelectedPlanet(prev => {
+      const newValue = prev === id ? null : id;
+      addLog(`Planet ${id} ${newValue === null ? 'deselected' : 'selected'}`);
+      return newValue;
+    });
+  }, [addLog, selectingDestination]);
+
+  const handleStagePointerMove = useCallback((e: React.PointerEvent<HTMLCanvasElement>) => {
+    if (!selectingDestination) return;
+    const cellSize = 100;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = Math.round((e.clientX - rect.left) / cellSize) * cellSize;
+    const y = Math.round((e.clientY - rect.top) / cellSize) * cellSize;
+    setHoverPosition({ x, y });
+  }, [selectingDestination]);
+
+  const handleStageClick = useCallback(() => {
+    if (!selectingDestination || !hoverPosition) return;
+    
+    const sourcePlanet = planets.find(p => p.id === selectedPlanet);
+    if (!sourcePlanet) return;
+
+    addLog(`Send from Planet ${selectedPlanet} to (${hoverPosition.x}, ${hoverPosition.y})`);
+    // TODO: Handle send event
+    
+    setSelectingDestination(false);
+    setSelectedPlanet(null);
+    setHoverPosition(null);
+  }, [selectingDestination, hoverPosition, selectedPlanet, planets, addLog]);
 
   return (
     <div className="relative w-full h-full">
@@ -80,9 +107,11 @@ export const StarMap = () => {
           antialias: true,
           eventMode: 'dynamic'
         }}
+        onPointerMove={handleStagePointerMove}
+        onClick={handleStageClick}
       >
         <Container eventMode="dynamic" interactiveChildren={true}>
-          {selectedPlanet && (
+          {(selectedPlanet || selectingDestination) && (
             <Grid
               width={dimensions.width}
               height={dimensions.height}
@@ -90,6 +119,31 @@ export const StarMap = () => {
               color={0x444444}
               alpha={0.8}
             />
+          )}
+          {selectingDestination && hoverPosition && (
+            <>
+              <Graphics
+                draw={g => {
+                  g.clear();
+                  const sourcePlanet = planets.find(p => p.id === selectedPlanet);
+                  if (!sourcePlanet) return;
+                  
+                  // Draw line from source to destination
+                  g.lineStyle(2, 0x22c55e, 0.6);
+                  g.moveTo(sourcePlanet.x, sourcePlanet.y);
+                  g.lineTo(hoverPosition.x, hoverPosition.y);
+                }}
+              />
+              <Graphics
+                draw={g => {
+                  g.clear();
+                  g.beginFill(0x22c55e, 0.3);
+                  g.lineStyle(2, 0x22c55e);
+                  g.drawCircle(hoverPosition.x, hoverPosition.y, 20);
+                  g.endFill();
+                }}
+              />
+            </>
           )}
           {planets.map((planet) => (
             <Planet
@@ -100,11 +154,12 @@ export const StarMap = () => {
               onHover={(isHovered: boolean) => addLog(`Planet ${planet.id} ${isHovered ? 'hovered' : 'unhovered'}`)}
             />
           ))}
-          {selectedPlanet && (
+          {selectedPlanet && !selectingDestination && (
             <PlanetDialog
               planet={selectedPlanet}
               onClose={() => setSelectedPlanet(null)}
-              x={(planets.find(p => p.id === selectedPlanet)?.x ?? 0) + 120} 
+              onSend={() => setSelectingDestination(true)}
+              x={(planets.find(p => p.id === selectedPlanet)?.x ?? 0) + 120}
               y={planets.find(p => p.id === selectedPlanet)?.y ?? 0}
             />
           )}

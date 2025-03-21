@@ -4,11 +4,12 @@ import { TextStyle } from 'pixi.js';
 interface PlanetDialogProps {
   planet: number;
   onClose: () => void;
+  onSend: () => void;
   x: number;
   y: number;
 }
 
-export const PlanetDialog = ({ planet, onClose, x, y }: PlanetDialogProps) => {
+export const PlanetDialog = ({ planet, onClose, onSend, x, y }: PlanetDialogProps) => {
   return (
     <Container position={[x, y]}>
       <Graphics
@@ -69,19 +70,46 @@ export const PlanetDialog = ({ planet, onClose, x, y }: PlanetDialogProps) => {
         eventMode="dynamic"
         onclick={onClose}
         cursor="pointer"
+        position={[-80, 40]}
       >
         <Graphics
           draw={g => {
             g.clear();
             g.beginFill(0x3b82f6);
-            g.drawRoundedRect(-40, 40, 80, 30, 5);
+            g.drawRoundedRect(0, 0, 80, 30, 5);
             g.endFill();
           }}
         />
         <Text
           text="Close"
           anchor={0.5}
-          position={[0, 55]}
+          position={[40, 15]}
+          style={
+            new TextStyle({
+              fill: 0xffffff,
+              fontSize: 14
+            })
+          }
+        />
+      </Container>
+      <Container
+        eventMode="dynamic"
+        onclick={onSend}
+        cursor="pointer"
+        position={[10, 40]}
+      >
+        <Graphics
+          draw={g => {
+            g.clear();
+            g.beginFill(0x22c55e);
+            g.drawRoundedRect(0, 0, 80, 30, 5);
+            g.endFill();
+          }}
+        />
+        <Text
+          text="Send"
+          anchor={0.5}
+          position={[40, 15]}
           style={
             new TextStyle({
               fill: 0xffffff,
