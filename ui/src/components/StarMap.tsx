@@ -53,9 +53,9 @@ export const StarMap = () => {
   })));
 
   const [armies, setArmies] = useState<ArmyData[]>([
-    { id: 1, x: 250, y: 250, energy: 100, playerId: 1 },
-    { id: 2, x: 450, y: 350, energy: 80, playerId: 2 },
-    { id: 3, x: 650, y: 250, energy: 120, playerId: 0 },
+    { id: 1, x: 300, y: 300, energy: 100, playerId: 1 },
+    { id: 2, x: 500, y: 400, energy: 80, playerId: 2 },
+    { id: 3, x: 700, y: 300, energy: 120, playerId: 0 },
   ]);
 
   const addLog = useCallback((message: string) => {
