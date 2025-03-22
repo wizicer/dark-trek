@@ -59,43 +59,45 @@ export const ArmyDialog = ({ energy, onClose, onSend, onReveal, x, y }: ArmyDial
           }
         />
       </Container>
-      <Container
-        eventMode="dynamic"
-        onclick={onSend}
-        cursor="pointer"
-        position={[10, 20]}
-      >
-        <Graphics
-          draw={g => {
-            g.clear();
-            g.beginFill(0x22c55e);
-            g.drawRoundedRect(0, 0, 70, 30, 5);
-            g.endFill();
-          }}
-        />
-        <Text
-          text="Send"
-          anchor={0.5}
-          position={[35, 15]}
-          style={
-            new TextStyle({
-              fill: 0xffffff,
-              fontSize: 14
-            })
-          }
-        />
-      </Container>
+      {!onReveal && (
+        <Container
+          eventMode="dynamic"
+          onclick={onSend}
+          cursor="pointer"
+          position={[10, 20]}
+        >
+          <Graphics
+            draw={g => {
+              g.clear();
+              g.beginFill(0x22c55e);
+              g.drawRoundedRect(0, 0, 70, 30, 5);
+              g.endFill();
+            }}
+          />
+          <Text
+            text="Send"
+            anchor={0.5}
+            position={[35, 15]}
+            style={
+              new TextStyle({
+                fill: 0xffffff,
+                fontSize: 14
+              })
+            }
+          />
+        </Container>
+      )}
       {onReveal && (
         <Container
           eventMode="dynamic"
           onclick={onReveal}
           cursor="pointer"
-          position={[50, 20]}
+          position={[10, 20]}
         >
           <Graphics
             draw={g => {
               g.clear();
-              g.beginFill(0x3b82f6);
+              g.beginFill(0x22c55e);
               g.drawRoundedRect(0, 0, 70, 30, 5);
               g.endFill();
             }}
