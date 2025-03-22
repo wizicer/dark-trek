@@ -1,5 +1,6 @@
 import { Container, Text, Graphics } from '@pixi/react';
 import { TextStyle } from 'pixi.js';
+import { FederatedPointerEvent } from '@pixi/events';
 
 interface ArmyDialogProps {
   energy: number;
@@ -11,8 +12,13 @@ interface ArmyDialogProps {
 }
 
 export const ArmyDialog = ({ energy, onClose, onSend, onReveal, x, y }: ArmyDialogProps) => {
+  const handleClick = (handler: () => void) => (e: FederatedPointerEvent) => {
+    e.stopPropagation();
+    handler();
+  };
+
   return (
-    <Container position={[x, y]}>
+    <Container position={[x, y]} eventMode="static">
       <Graphics
         draw={g => {
           g.clear();
@@ -34,8 +40,8 @@ export const ArmyDialog = ({ energy, onClose, onSend, onReveal, x, y }: ArmyDial
         }
       />
       <Container
-        eventMode="dynamic"
-        onclick={onClose}
+        eventMode="static"
+        onclick={handleClick(onClose)}
         cursor="pointer"
         position={[-80, 20]}
       >
@@ -61,8 +67,8 @@ export const ArmyDialog = ({ energy, onClose, onSend, onReveal, x, y }: ArmyDial
       </Container>
       {!onReveal && (
         <Container
-          eventMode="dynamic"
-          onclick={onSend}
+          eventMode="static"
+          onclick={handleClick(onSend)}
           cursor="pointer"
           position={[10, 20]}
         >
@@ -89,8 +95,8 @@ export const ArmyDialog = ({ energy, onClose, onSend, onReveal, x, y }: ArmyDial
       )}
       {onReveal && (
         <Container
-          eventMode="dynamic"
-          onclick={onReveal}
+          eventMode="static"
+          onclick={handleClick(onReveal)}
           cursor="pointer"
           position={[10, 20]}
         >
