@@ -2,6 +2,7 @@ import { Graphics } from '@pixi/react';
 import { Graphics as PixiGraphics } from 'pixi.js';
 import { useState, useEffect, useCallback } from 'react';
 import "@pixi/events";
+import { getPlayerColor } from '../types/game';
 
 const ENABLE_SATELLITE_ANIMATION = false; // Switch to control satellite animation
 
@@ -13,23 +14,37 @@ interface SatelliteConfig {
 }
 
 interface PlanetProps {
+  id: number;
   x: number;
   y: number;
   radius: number;
-  selected: boolean;
-  onClick: () => void;
-  onHover: (isHovered: boolean) => void;
   satellites?: SatelliteConfig[];
+  selected?: boolean;
+  onClick?: (id: number) => void;
+  onHover?: (isHovered: boolean) => void;
+  playerId?: number;
+  currentPlayerId?: number;
 }
 
-export const Planet = ({ x, y, radius, selected, onClick, onHover, satellites = [] }: PlanetProps) => {
+export const Planet = ({
+  id,
+  x,
+  y,
+  radius,
+  satellites = [],
+  selected = false,
+  onClick,
+  onHover,
+  playerId = 0,
+  currentPlayerId = 1
+}: PlanetProps) => {
   const [time, setTime] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
   const [satelliteAngles, setSatelliteAngles] = useState<number[]>(satellites.map(() => Math.random() * Math.PI * 2));
 
   const handleHoverChange = (hovered: boolean) => {
     setIsHovered(hovered);
-    onHover(hovered);
+    onHover?.(hovered);
   };
 
   useEffect(() => {
@@ -97,7 +112,8 @@ export const Planet = ({ x, y, radius, selected, onClick, onHover, satellites = 
 
     // Draw planet surface
     const baseColor = selected ? 0x22c55e : 0x4a5568;
-    const highlightColor = selected ? 0x4ade80 : 0x1f2937;
+    const highlightColor = getPlayerColor(playerId);
+    // const highlightColor = selected ? 0x4ade80 : 0x1f2937;
 
     g.beginFill(0x000000, 0.5);
     g.drawCircle(x, y, radius + 2);
@@ -135,19 +151,21 @@ export const Planet = ({ x, y, radius, selected, onClick, onHover, satellites = 
       drawSatellite(g, config, satelliteAngles[index]);
     });
 
+    const glowColor = playerId === currentPlayerId ? 0x4ade80 : 0xb4b4b4;
+
     // Draw selection/hover effect
     if (selected || isHovered) {
-      g.lineStyle(2, selected ? 0x4ade80 : 0x60a5fa, 0.8);
+      g.lineStyle(2, selected ? glowColor : 0x60a5fa, 0.8);
       g.drawCircle(x, y, radius + 2);
 
       if (selected) {
-        g.lineStyle(1, 0x4ade80, 0.4);
+        g.lineStyle(1, glowColor, 0.4);
         g.drawCircle(x, y, radius + 6);
-        g.lineStyle(1, 0x4ade80, 0.2);
+        g.lineStyle(1, glowColor, 0.2);
         g.drawCircle(x, y, radius + 10);
       }
 
-      g.lineStyle(2, selected ? 0x00ff00 : 0xffffff, 0.5);
+      g.lineStyle(2, selected ? glowColor : 0xffffff, 0.5);
       const segments = 100;
       
       for (let i = 0; i < segments; i++) {
@@ -163,7 +181,7 @@ export const Planet = ({ x, y, radius, selected, onClick, onHover, satellites = 
         }
       }
     }
-  }, [x, y, radius, selected, satellites, satelliteAngles, time, isHovered, drawSatellite]);
+  }, [x, y, radius, selected, satellites, satelliteAngles, time, isHovered, drawSatellite, currentPlayerId, playerId]);
 
   return (
     <Graphics 
@@ -171,7 +189,7 @@ export const Planet = ({ x, y, radius, selected, onClick, onHover, satellites = 
       alpha={0.8}
       eventMode="dynamic"
       cursor="pointer"
-      pointertap={onClick}
+      pointertap={() => onClick?.(id)}
       pointerover={() => handleHoverChange(true)}
       pointerout={() => handleHoverChange(false)}
     />

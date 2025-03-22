@@ -2,16 +2,23 @@ import { Container, Text, Graphics } from '@pixi/react';
 import { TextStyle } from 'pixi.js';
 
 interface PlanetDialogProps {
-  planet: number;
+  planet: {
+    id: number;
+    x: number;
+    y: number;
+    radius: number;
+    playerId?: number;
+  };
   onClose: () => void;
-  onSend: () => void;
-  x: number;
-  y: number;
+  onSendArmy: () => void;
+  currentPlayerId: number;
 }
 
-export const PlanetDialog = ({ planet, onClose, onSend, x, y }: PlanetDialogProps) => {
+export const PlanetDialog = ({ planet, onClose, onSendArmy, currentPlayerId }: PlanetDialogProps) => {
+  const canSendArmy = planet.playerId === currentPlayerId;
+
   return (
-    <Container position={[x, y]}>
+    <Container position={[planet.x + 150, planet.y]}>
       <Graphics
         draw={g => {
           g.clear();
@@ -22,7 +29,7 @@ export const PlanetDialog = ({ planet, onClose, onSend, x, y }: PlanetDialogProp
         }}
       />
       <Text
-        text={`Planet ${planet}`}
+        text={`Planet ${planet.id}`}
         anchor={0.5}
         position={[0, -50]}
         style={
@@ -92,32 +99,34 @@ export const PlanetDialog = ({ planet, onClose, onSend, x, y }: PlanetDialogProp
           }
         />
       </Container>
-      <Container
-        eventMode="dynamic"
-        onclick={onSend}
-        cursor="pointer"
-        position={[10, 40]}
-      >
-        <Graphics
-          draw={g => {
-            g.clear();
-            g.beginFill(0x22c55e);
-            g.drawRoundedRect(0, 0, 80, 30, 5);
-            g.endFill();
-          }}
-        />
-        <Text
-          text="Send"
-          anchor={0.5}
-          position={[40, 15]}
-          style={
-            new TextStyle({
-              fill: 0xffffff,
-              fontSize: 14
-            })
-          }
-        />
-      </Container>
+      {canSendArmy && (
+        <Container
+          eventMode="dynamic"
+          onclick={onSendArmy}
+          cursor="pointer"
+          position={[10, 40]}
+        >
+          <Graphics
+            draw={g => {
+              g.clear();
+              g.beginFill(0x22c55e);
+              g.drawRoundedRect(0, 0, 80, 30, 5);
+              g.endFill();
+            }}
+          />
+          <Text
+            text="Send Army"
+            anchor={0.5}
+            position={[40, 15]}
+            style={
+              new TextStyle({
+                fill: 0xffffff,
+                fontSize: 14
+              })
+            }
+          />
+        </Container>
+      )}
     </Container>
   );
 };

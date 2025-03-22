@@ -15,23 +15,24 @@ import { PlanetData, PathPoint, ArmyData } from "../types/game";
 export const StarMap = () => {
   const [selectedPlanet, setSelectedPlanet] = useState<number | null>(null);
   const [selectedArmy, setSelectedArmy] = useState<number | null>(null);
-  const [selectingDestination, setSelectingDestination] = useState(false);
-  const [hoverPosition, setHoverPosition] = useState<PathPoint | null>(null);
-  const [pathPoints, setPathPoints] = useState<PathPoint[]>([]);
-  const [showDebug] = useState(false);
-  const [searchItems, setSearchItems] = useState<SearchItem[]>([]);
   const [selectedSearchId, setSelectedSearchId] = useState<number | null>(null);
+  const [selectingDestination, setSelectingDestination] = useState(false);
+  const [pathPoints, setPathPoints] = useState<PathPoint[]>([]);
+  const [hoverPosition, setHoverPosition] = useState<PathPoint | null>(null);
+  const [searchItems, setSearchItems] = useState<SearchItem[]>([]);
+  const [currentPlayerId, setCurrentPlayerId] = useState<number>(1);
+  const [logs, setLogs] = useState<string[]>([]);
+  const [showDebug] = useState(false);
   const [dimensions, setDimensions] = useState({
     width: window.innerWidth,
     height: window.innerHeight,
   });
-  const [logs, setLogs] = useState<string[]>([]);
   const planets: PlanetData[] = [
-    { id: 1, x: 200, y: 200, radius: 30 },
-    { id: 2, x: 400, y: 300, radius: 40 },
-    { id: 3, x: 600, y: 400, radius: 35 },
-    { id: 4, x: 800, y: 300, radius: 45 },
-    { id: 5, x: 500, y: 500, radius: 38 },
+    { id: 1, x: 200, y: 200, radius: 30, playerId: 1 },
+    { id: 2, x: 400, y: 300, radius: 40, playerId: 2 },
+    { id: 3, x: 600, y: 200, radius: 35, playerId: 0 },
+    { id: 4, x: 800, y: 400, radius: 45, playerId: 0 },
+    { id: 5, x: 300, y: 500, radius: 25, playerId: 0 },
   ].map((planet) => ({
     ...planet,
     satellites: [
@@ -50,13 +51,11 @@ export const StarMap = () => {
     ],
   }));
 
-  const [armies, setArmies] = useState<ArmyData[]>(
-    [
-      { id: 1, x: 300, y: 300, energy: 100 },
-      { id: 2, x: 700, y: 200, energy: 150 },
-      { id: 3, x: 500, y: 600, energy: 80 },
-    ]
-  );
+  const [armies, setArmies] = useState<ArmyData[]>([
+    { id: 1, x: 250, y: 250, energy: 100, playerId: 1 },
+    { id: 2, x: 450, y: 350, energy: 80, playerId: 2 },
+    { id: 3, x: 650, y: 250, energy: 120, playerId: 0 },
+  ]);
 
   const addLog = useCallback((message: string) => {
     setLogs((prev) => [
@@ -113,11 +112,10 @@ export const StarMap = () => {
         if (newValue !== null) {
           setSelectedArmy(null);
         }
-        addLog(`Planet ${id} ${newValue === null ? "deselected" : "selected"}`);
         return newValue;
       });
     },
-    [addLog, selectingDestination]
+    [selectingDestination]
   );
 
   const handleArmyClick = useCallback(
@@ -128,11 +126,10 @@ export const StarMap = () => {
         if (newValue !== null) {
           setSelectedPlanet(null);
         }
-        addLog(`Army ${id} ${newValue === null ? "deselected" : "selected"}`);
         return newValue;
       });
     },
-    [addLog, selectingDestination]
+    [selectingDestination]
   );
 
   const handleStagePointerMove = useCallback(
@@ -189,8 +186,20 @@ export const StarMap = () => {
 
     if (selectedArmy) {
       const army = armies.find((a) => a.id === selectedArmy);
-      if (army) {
-        army.movingTo = pathPoints;
+      if (army && army.playerId === currentPlayerId) {
+        setArmies((prev) =>
+          prev.map((a) =>
+            a.id === selectedArmy
+              ? {
+                  ...a,
+                  movingTo: [...(pathPoints.length > 0 ? pathPoints : [])],
+                }
+              : a
+          )
+        );
+        addLog(`Army ${selectedArmy} is moving to ${pathPoints[0].x},${pathPoints[0].y}`);
+      } else {
+        addLog(`Cannot move army that doesn't belong to you`);
       }
     } else if (selectedPlanet) {
       // Create a new army from the planet
@@ -221,6 +230,7 @@ export const StarMap = () => {
     selectedPlanet,
     planets,
     setArmies,
+    currentPlayerId,
   ]);
 
   const handleUndo = useCallback(() => {
@@ -305,16 +315,21 @@ export const StarMap = () => {
                   speed={50}
                   energy={army.energy}
                   selected={selectedArmy === army.id}
-                  onSelect={handleArmyClick}
+                  onSelect={() => handleArmyClick(army.id)}
                   onReveal={() => addLog(`Reveal army ${army.id}`)}
                 />
               ) : (
                 <Army
+                  key={army.id}
+                  id={army.id}
                   x={army.x}
                   y={army.y}
-                  onClick={() => handleArmyClick(army.id)}
+                  energy={army.energy}
                   selected={selectedArmy === army.id}
+                  onClick={() => handleArmyClick(army.id)}
                   onHover={() => {}}
+                  playerId={army.playerId}
+                  currentPlayerId={currentPlayerId}
                 />
               )}
             </React.Fragment>
@@ -322,26 +337,24 @@ export const StarMap = () => {
           {planets.map((planet) => (
             <Planet
               key={planet.id}
-              {...planet}
-              onClick={() => handlePlanetClick(planet.id)}
+              id={planet.id}
+              x={planet.x}
+              y={planet.y}
+              radius={planet.radius}
+              satellites={planet.satellites}
               selected={selectedPlanet === planet.id}
+              onClick={handlePlanetClick}
               onHover={() => {}}
+              playerId={planet.playerId}
+              currentPlayerId={currentPlayerId}
             />
           ))}
           {selectedPlanet && !selectingDestination && (
             <PlanetDialog
-              {...planets.find((p) => p.id === selectedPlanet)!}
-              planet={selectedPlanet}
-              x={(planets.find((p) => p.id === selectedPlanet)?.x ?? 0) + 120}
-              y={planets.find((p) => p.id === selectedPlanet)?.y ?? 0}
-              onClose={() => {
-                setSelectedPlanet(null);
-                addLog(`Planet ${selectedPlanet} dialog closed`);
-              }}
-              onSend={() => {
-                setSelectingDestination(true);
-                addLog(`Setting destination from planet ${selectedPlanet}`);
-              }}
+              planet={planets.find((p) => p.id === selectedPlanet)!}
+              onClose={() => setSelectedPlanet(null)}
+              onSendArmy={() => setSelectingDestination(true)}
+              currentPlayerId={currentPlayerId}
             />
           )}
           {selectedArmy &&

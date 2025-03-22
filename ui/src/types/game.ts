@@ -3,6 +3,7 @@ export interface PlanetData {
   x: number;
   y: number;
   radius: number;
+  playerId?: number;
   satellites: {
     size: number;
     orbitRadius: number;
@@ -21,5 +22,12 @@ export interface ArmyData {
   x: number;
   y: number;
   energy: number;
+  playerId?: number;
   movingTo?: { x: number; y: number }[];
+}
+
+export function getPlayerColor(playerId: number) {
+  if (playerId === 1) return 0xde4a80; // Red
+  if (playerId === 2) return 0x225ec5; // Blue
+  return 0x888888; // Grey
 }
