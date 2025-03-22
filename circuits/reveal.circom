@@ -22,16 +22,64 @@ template Reveal(POINT_NUM, MAP_WIDTH, MIMC_ROUND) {
     signal output position_hash;
     signal output energy;
 
-    // //------------------------------------------------------------------------------
-    // // 1. verify that the commitment is valid and corresponds to the positions
-    // //------------------------------------------------------------------------------
+    // ------------------------------------------------------------------------------
+    // 1. verify that the commitment is valid and corresponds to the positions
+    // ------------------------------------------------------------------------------
 
+    // ------------------------------------------------------------------------------
+    // concatenate the salt and pk into positions
+
+    // convert the positions to bits
+    component num2Bits_positions[POINT_NUM];
+    signal positions_bits[POINT_NUM][64];
+    for (var i = 0; i < POINT_NUM; i++){
+        num2Bits_positions[i] = Num2Bits(64);
+        num2Bits_positions[i].in <== positions[i];
+        num2Bits_positions[i].out ==> positions_bits[i];
+    }
+
+    // convert the pk and salt to bits
+    component num2Bits_pk = Num2Bits(160);
+    component num2Bits_salt = Num2Bits(32);
+    signal pk_bits[160];
+    signal salt_bits[32];
+    num2Bits_pk.in <== pk;
+    num2Bits_pk.out ==> pk_bits;
+    num2Bits_salt.in <== salt;
+    num2Bits_salt.out ==> salt_bits;
+
+    // concatenate the salt and pk into positions
+    signal positions_concat[POINT_NUM][256];
+    for (var i = 0; i < POINT_NUM; i++){
+        for (var j = 0; j < 64; j++){
+            positions_concat[i][j] <== positions_bits[i][j];
+        }
+        for (var j = 0; j < 160; j++){
+            positions_concat[i][j + 64] <== pk_bits[j];
+        }
+        for (var j = 0; j < 32; j++){
+            positions_concat[i][j + 224] <== salt_bits[j];
+        }
+    }
+
+    // convert the positions_concat to num
+    component bits2num_positions[POINT_NUM];
+    signal positions_num[POINT_NUM];
+    for (var i = 0; i < POINT_NUM; i++){
+        bits2num_positions[i] = Bits2Num(256);
+        bits2num_positions[i].in <== positions_concat[i];
+        bits2num_positions[i].out ==> positions_num[i];
+        log("positions_num[i]", positions_num[i]);
+    }
+   
+    // ------------------------------------------------------------------------------
     // griffin permutation
-    signal position_griffin[POINT_NUM];
     component griffin_perm = GriffinPermutation(POINT_NUM); 
-    griffin_perm.inp <== positions;
+    signal position_griffin[POINT_NUM];
+    griffin_perm.inp <== positions_num;
     griffin_perm.out ==> position_griffin;
 
+    // ------------------------------------------------------------------------------
     // get mimc hash
     component mimc[MIMC_ROUND][POINT_NUM];
     component num_truncate_bits[MIMC_ROUND][POINT_NUM];
@@ -112,12 +160,7 @@ template Reveal(POINT_NUM, MAP_WIDTH, MIMC_ROUND) {
         for (var round = 0; round < MIMC_ROUND; round++) {
             acc_bits_to_index[i][round][0] <== 0;
             for (var j = 0; j < POINT_NUM; j++) {
-                // log("i:", i);
-                // log("round:", round);
-                // log("j:", j);
-                // log("bits_to_index[round][j]:", bits_to_index[round][j]);
                 acc_bits_to_index_temp[i][round][j] <== IsZero()(i - bits_to_index[round][j]);
-                // log("acc_bits_to_index_temp[i][round][j]", acc_bits_to_index_temp[i][round][j]);
                 acc_bits_to_index[i][round][j + 1] <== acc_bits_to_index[i][round][j] + acc_bits_to_index_temp[i][round][j];
             }
             bit_array_temp[i][round + 1] <== bit_array_temp[i][round] + acc_bits_to_index[i][round][POINT_NUM];
@@ -138,6 +181,7 @@ template Reveal(POINT_NUM, MAP_WIDTH, MIMC_ROUND) {
     signal result <== IsZero()(bit_array_num - commitment);
     result === 0;
     // bit_array_num === commitment;
+
 
     //------------------------------------------------------------------------------
     // 2. verify the position is valid
@@ -162,6 +206,49 @@ template Reveal(POINT_NUM, MAP_WIDTH, MIMC_ROUND) {
 
         accum_sum_path[i][4] === 1;
     }
+
+    //------------------------------------------------------------------------------
+    // 3. output the correct position hash
+    //------------------------------------------------------------------------------
+    signal duration_flag;
+    component gt = GreaterEqThan(8);
+    gt.in[0] <== duration;
+    // path_length = POINT_NUM - 1
+    gt.in[1] <== POINT_NUM - 1;
+    gt.out ==> duration_flag;
+
+    // make sure the index is valid
+    signal index_left <== duration_flag * POINT_NUM;
+    signal index_right <== (1 - duration_flag) * duration;
+    signal index <== index_left + index_right;
+
+    // component mimc_hash_temp = MiMC7(91);
+    // mimc_hash_temp.x_in <== positions[index];
+    // mimc_hash_temp.k <== pk;
+    // mimc_hash_temp.out ==> position_hash;
+
+    //------------------------------------------------------------------------------
+    // 4. output the correct energy
+    //------------------------------------------------------------------------------
+
+    // target_occupied should be a bit
+    (1 - target_occupied) * target_occupied === 0;
+    signal occupied_energy <== (1 - target_occupied) * (duration - POINT_NUM + 1);
+    // log("occupied_energy", occupied_energy);
+
+    signal ten_duration <== 10 * duration;
+    signal ten_path_length <== 10 * (POINT_NUM - 1);
+
+    // path_length = POINT_NUM - 1
+    // duration < path_length
+    signal energy_left <== (1 - duration_flag) * ten_duration;
+    // log("energy_left", energy_left);
+    // duration >= path_length
+    signal energy_right <== duration_flag * (ten_path_length + occupied_energy);
+    // log("energy_right", energy_right);
+    energy <== energy_left + energy_right;
+    log("energy", energy);
+
 }
 
 component main {public [commitment, duration, pk, salt, target_occupied]} = Reveal(3, 4, 2);
