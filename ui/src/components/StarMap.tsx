@@ -250,15 +250,28 @@ export const StarMap = () => {
           {selectedPlanet && !selectingDestination && (
             <PlanetDialog
               {...planets.find(p => p.id === selectedPlanet)!}
-              onClose={() => setSelectedPlanet(null)}
-              onSend={() => setSelectingDestination(true)}
+              planet={selectedPlanet}
+              onClose={() => {
+                setSelectedPlanet(null);
+                addLog(`Planet ${selectedPlanet} dialog closed`);
+              }}
+              onSend={() => {
+                setSelectingDestination(true);
+                addLog(`Setting destination from planet ${selectedPlanet}`);
+              }}
             />
           )}
           {selectedArmy && !selectingDestination && !armies.find(a => a.id === selectedArmy)?.movingTo && (
             <ArmyDialog
               {...armies.find(a => a.id === selectedArmy)!}
-              onClose={() => setSelectedArmy(null)}
-              onSend={() => setSelectingDestination(true)}
+              onClose={() => {
+                setSelectedArmy(null);
+                addLog(`Army ${selectedArmy} dialog closed`);
+              }}
+              onSend={() => {
+                setSelectingDestination(true);
+                addLog(`Setting destination for army ${selectedArmy}`);
+              }}
             />
           )}
         </Container>

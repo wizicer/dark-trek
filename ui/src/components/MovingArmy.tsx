@@ -103,6 +103,14 @@ export const MovingArmy = ({
     onSelect?.(id);
   };
 
+  const handleClose = () => {
+    onSelect?.(id); // Clicking again deselects
+  };
+
+  const handleReveal = () => {
+    onReveal?.();
+  };
+
   return (
     <>
       <Graphics draw={draw} />
@@ -121,9 +129,9 @@ export const MovingArmy = ({
           x={position.x}
           y={position.y}
           energy={energy}
-          onClose={() => onSelect?.(id)}
+          onClose={handleClose}
           onSend={() => {}}
-          onReveal={onReveal}
+          onReveal={handleReveal}
         />
       )}
     </>
