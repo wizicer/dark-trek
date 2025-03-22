@@ -54,7 +54,7 @@ export const MovingArmy = ({
         requestAnimationFrame(animate);
       } else {
         setPosition(target);
-        if (currentSegment < pathPoints.length - 1) {
+        if (currentSegment < pathPoints.length) {
           setCurrentSegment(prev => prev + 1);
         }
       }
@@ -96,7 +96,9 @@ export const MovingArmy = ({
   let angle = 0;
   if (currentSegment < pathPoints.length) {
     const target = pathPoints[currentSegment];
-    angle = Math.atan2(target.y - position.y, target.x - position.x);
+    angle = Math.atan2(target.y - position.y, target.x - position.x) + Math.PI / 2;
+  } else {
+    angle = 0;
   }
 
   const handleClick = () => {
@@ -126,7 +128,7 @@ export const MovingArmy = ({
       />
       {selected && (
         <ArmyDialog
-          x={position.x}
+          x={position.x + 120}
           y={position.y}
           energy={energy}
           onClose={handleClose}
