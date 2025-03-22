@@ -53,18 +53,22 @@ export const Army = ({ x, y, selected, onClick, onHover }: ArmyProps) => {
     g.lineStyle(0);
     g.beginFill(selected ? 0x22c55e : 0xffffff);
     
-    // Draw SVG path as simplified shapes for the army icon
-    g.moveTo(armyX - 15, armyY + 15);
-    g.lineTo(armyX, armyY - 15);
-    g.lineTo(armyX + 15, armyY + 15);
-    g.lineTo(armyX - 15, armyY + 15);
-    
-    // Draw shield part
-    g.moveTo(armyX - 8, armyY);
-    g.lineTo(armyX + 8, armyY);
-    g.lineTo(armyX + 8, armyY + 10);
-    g.lineTo(armyX - 8, armyY + 10);
-    g.lineTo(armyX - 8, armyY);
+    const offsetX = armyX - 15;
+    const offsetY = armyY - 15;
+
+    // Draw simplified spaceship shape
+    g.moveTo(offsetX + 15, offsetY); // Top point
+    g.lineTo(offsetX + 30, offsetY + 30); // Right wing
+    g.lineTo(offsetX + 20, offsetY + 25); // Right body
+    g.lineTo(offsetX + 15, offsetY + 30); // Bottom point
+    g.lineTo(offsetX + 10, offsetY + 25); // Left body
+    g.lineTo(offsetX, offsetY + 30); // Left wing
+    g.lineTo(offsetX + 15, offsetY); // Back to top
+
+    // Draw engine glow
+    g.endFill();
+    g.beginFill(selected ? 0x4ade80 : 0x60a5fa, 0.5);
+    g.drawCircle(offsetX + 15, offsetY + 28, 4);
     
     g.endFill();
   }, [x, y, selected, isHovered, orbitAngle]);
