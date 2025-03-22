@@ -63,7 +63,7 @@ Reveal电路
 - 针对每一个position，计算累加到bloom filter，并验证最终结果与commitment相等
 
 2种情况：
-- duration <= len(positions): energy = len(positions) * 10
+- duration <= len(positions): energy = duration * 10
 - duration > len(positions): len(positions) * 10 + **occupied** ? 0 : (duration - len(positions)) * 1 
 
 ## 核心算法
