@@ -14,6 +14,10 @@ This repository contains benchmarks for various cryptographic operations on the 
 
 Each test was run 3 times and the average time was calculated.
 
+Experiment Machine:
+- CPU: Intel(R) Core(TM) i5-11600KF CPU @ 3.90GHz
+- RAM: 32GB
+
 ### Square Root Calculation
 
 | Iterations | Total Time | Avg Time per Iteration |
