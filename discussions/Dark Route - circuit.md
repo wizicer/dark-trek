@@ -16,6 +16,8 @@
 - position_hash：输出经过 duration 时间承诺者所在位置对应的哈希值。
 - energy (remaining) ：表示经过 duration 时间消耗的总 energy
 
+电路参数：
+
 下图表示是一个简单示例：
 
 ![](./dark-route-circuit-route.svg)
@@ -28,10 +30,12 @@
 
 ### TODO
 - [ ] griffin permutation 算法，随机数 $\alpha, \beta$ 在每一轮取不同的值
-- [ ] salt 和 pk 添加位置，进行拼接
+- [x] salt 和 pk 添加位置，进行拼接 ✅ 2025-03-22
 - [ ] bn254 和最后输出 commitment uint256 不匹配问题
 - 变成 253 或者 248 位
 - [ ] 开根号
+- [ ] NumTruncateBits 检查约束
+- [ ] position_hash 计算
 
 
 ### 约束 positions 和 commitment
@@ -40,31 +44,37 @@
 
 ![](./dark-route-circuit-commitment.svg)
 
+`positions[i]` 拼接 `pk` 和 `salt` 计算：
+- `positions[i]`：64 位
+- `pk` ： 160 位
+- `salt` ：32 位
+拼接后的结果 `concatenate[i] = positions[i]||pk||salt` 为 256 位。
 
 ### 约束 positions
 
-- private positions[] 
-表示的是承诺的一个路径，位置坐标，从 A 到 B，一次途径的所有坐标点。
-		$$
-		p_0 \rightarrow p_1 \rightarrow \ldots \rightarrow p_{n-1}
-		$$
+private positions[] 表示的是承诺的一个路径，位置坐标，从 A 到 B，一次途径的所有坐标点。
 
-需要约束两点之间是相邻的，即
+$$
+p_0 \rightarrow p_1 \rightarrow \ldots \rightarrow p_{n-1}
+$$
 
-```
-// 如果前一个横坐标和后一个点的横坐标不相等，则为 1，否则为 0
-flag_x = 1 - IsZero(x_i, x_{i+1})
-// 如果前一个纵坐标和后一个点的纵坐标不相等，则为 1，否则为 0
-flag_y = 1 - IsZero(y_i, y_{i+1})
-```
+需要约束两点之间是相邻的。
 
-如果 $x_i \neq x_{i+1}$ ，那么只能是下面两种情况之一：
-1. $x_i = x_{i + 1} - 1$
-2. $x_i = x_{i + 1} + 1$
+- [ ] 添加图示
 
-### 输出 position
+### 输出 position_hash
 
-输出的 position 是
+输出的 position_hash 是根据 duration 以及传入的 positions 长度计算得出的。
+
+如果 `duration < len(positions) - 1` ，表明军队还没有到达目的地，输出的是中间路径点上的哈希值 `a[duration]` 。
+
+![](./dark-route-circuit-position-hash.svg)
+
+如果 `duration >= len(positions) - 1` ，表明军队已经到达目的地，输出最后一个点 $p_{n-1}$ 的哈希值 $a_{n-1}$。
+
+![](./dark-route-circuit-position-hash2.svg)
+
+### 输出 energy
 
 ## 电路运行
 
