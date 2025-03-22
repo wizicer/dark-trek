@@ -2,15 +2,31 @@ import { Graphics } from '@pixi/react';
 import { useCallback, useEffect, useState } from 'react';
 import { Graphics as PixiGraphics } from 'pixi.js';
 import { SpaceshipIcon } from './SpaceshipIcon';
+import { ArmyDialog } from './ArmyDialog';
 
 interface MovingArmyProps {
   startX: number;
   startY: number;
   pathPoints: { x: number; y: number }[];
   speed: number; // pixels per second
+  energy: number;
+  id: number;
+  selected?: boolean;
+  onSelect?: (id: number) => void;
+  onReveal?: () => void;
 }
 
-export const MovingArmy = ({ startX, startY, pathPoints, speed }: MovingArmyProps) => {
+export const MovingArmy = ({ 
+  startX, 
+  startY, 
+  pathPoints, 
+  speed,
+  energy,
+  id,
+  selected = false,
+  onSelect,
+  onReveal
+}: MovingArmyProps) => {
   const [position, setPosition] = useState({ x: startX, y: startY });
   const [currentSegment, setCurrentSegment] = useState(0);
 
@@ -83,6 +99,10 @@ export const MovingArmy = ({ startX, startY, pathPoints, speed }: MovingArmyProp
     angle = Math.atan2(target.y - position.y, target.x - position.x);
   }
 
+  const handleClick = () => {
+    onSelect?.(id);
+  };
+
   return (
     <>
       <Graphics draw={draw} />
@@ -90,7 +110,22 @@ export const MovingArmy = ({ startX, startY, pathPoints, speed }: MovingArmyProp
         x={position.x}
         y={position.y}
         angle={angle}
+        color={selected ? 0x22c55e : 0xffffff}
+        glowColor={selected ? 0x4ade80 : 0x60a5fa}
+        onClick={handleClick}
+        onHover={() => {}}
+        interactive
       />
+      {selected && (
+        <ArmyDialog
+          x={position.x}
+          y={position.y}
+          energy={energy}
+          onClose={() => onSelect?.(id)}
+          onSend={() => {}}
+          onReveal={onReveal}
+        />
+      )}
     </>
   );
 };

@@ -217,10 +217,15 @@ export const StarMap = () => {
             <React.Fragment key={army.id}>
               {army.movingTo ? (
                 <MovingArmy
+                  id={army.id}
                   startX={army.x}
                   startY={army.y}
                   pathPoints={army.movingTo}
-                  speed={50} // pixels per second
+                  speed={50}
+                  energy={army.energy}
+                  selected={selectedArmy === army.id}
+                  onSelect={handleArmyClick}
+                  onReveal={() => addLog(`Reveal army ${army.id}`)}
                 />
               ) : (
                 <Army
@@ -244,26 +249,16 @@ export const StarMap = () => {
           ))}
           {selectedPlanet && !selectingDestination && (
             <PlanetDialog
-              planet={selectedPlanet}
+              {...planets.find(p => p.id === selectedPlanet)!}
               onClose={() => setSelectedPlanet(null)}
-              onSend={() => {
-                setSelectingDestination(true);
-                setPathPoints([]);
-              }}
-              x={(planets.find(p => p.id === selectedPlanet)?.x ?? 0) + 120}
-              y={planets.find(p => p.id === selectedPlanet)?.y ?? 0}
+              onSend={() => setSelectingDestination(true)}
             />
           )}
-          {selectedArmy && !selectingDestination && (
+          {selectedArmy && !selectingDestination && !armies.find(a => a.id === selectedArmy)?.movingTo && (
             <ArmyDialog
-              energy={armies.find(a => a.id === selectedArmy)?.energy ?? 0}
+              {...armies.find(a => a.id === selectedArmy)!}
               onClose={() => setSelectedArmy(null)}
-              onSend={() => {
-                setSelectingDestination(true);
-                setPathPoints([]);
-              }}
-              x={(armies.find(a => a.id === selectedArmy)?.x ?? 0) + 120}
-              y={armies.find(a => a.id === selectedArmy)?.y ?? 0}
+              onSend={() => setSelectingDestination(true)}
             />
           )}
         </Container>

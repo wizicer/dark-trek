@@ -5,11 +5,12 @@ interface ArmyDialogProps {
   energy: number;
   onClose: () => void;
   onSend: () => void;
+  onReveal?: () => void;
   x: number;
   y: number;
 }
 
-export const ArmyDialog = ({ energy, onClose, onSend, x, y }: ArmyDialogProps) => {
+export const ArmyDialog = ({ energy, onClose, onSend, onReveal, x, y }: ArmyDialogProps) => {
   return (
     <Container position={[x, y]}>
       <Graphics
@@ -84,6 +85,34 @@ export const ArmyDialog = ({ energy, onClose, onSend, x, y }: ArmyDialogProps) =
           }
         />
       </Container>
+      {onReveal && (
+        <Container
+          eventMode="dynamic"
+          onclick={onReveal}
+          cursor="pointer"
+          position={[50, 20]}
+        >
+          <Graphics
+            draw={g => {
+              g.clear();
+              g.beginFill(0x3b82f6);
+              g.drawRoundedRect(0, 0, 70, 30, 5);
+              g.endFill();
+            }}
+          />
+          <Text
+            text="Reveal"
+            anchor={0.5}
+            position={[35, 15]}
+            style={
+              new TextStyle({
+                fill: 0xffffff,
+                fontSize: 14
+              })
+            }
+          />
+        </Container>
+      )}
     </Container>
   );
 };
