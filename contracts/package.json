@@ -2,8 +2,9 @@
   "name": "contracts",
   "version": "1.0.0",
   "scripts": {
-    "build:contracts": "forge build && typechain --target ethers-v6 --out-dir ../ui/src/contracts out/**/*.json",
+    "build:contracts": "forge build --extra-output-files abi && typechain --target ethers-v6 --out-dir ../ui/src/contracts ../out/**/*.abi.json",
     "deploy:contracts": "bash ./scripts/deploy.sh",
+    "chain": "anvil --mnemonic-seed-unsafe 100",
     "build": "npm run build:contracts"
   },
   "devDependencies": {
