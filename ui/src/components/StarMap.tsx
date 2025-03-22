@@ -207,12 +207,13 @@ export const StarMap = () => {
       // Create a new army from the planet
       const planet = planets.find((p) => p.id === selectedPlanet);
       if (planet) {
-        const newArmy = {
+        const newArmy : ArmyData = {
           id: armies.length + 1,
           x: planet.x,
           y: planet.y,
           energy: 100,
           movingTo: pathPoints,
+          playerId: currentPlayerId,
         };
         setArmies((prev) => [...prev, newArmy]);
         addLog(`Created new army ${newArmy.id} from planet ${selectedPlanet}`);
