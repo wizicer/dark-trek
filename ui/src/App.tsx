@@ -1,11 +1,14 @@
 import { StarMap } from './components/StarMap'
+import { WalletProvider } from './providers/WalletProvider'
 import './App.css'
 
 function App() {
   return (
-    <div className="w-screen h-screen">
-      <StarMap />
-    </div>
+    <WalletProvider>
+      <div className="w-screen h-screen">
+        <StarMap />
+      </div>
+    </WalletProvider>
   )
 }
 

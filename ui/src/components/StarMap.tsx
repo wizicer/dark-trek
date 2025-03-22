@@ -11,6 +11,7 @@ import { SearchList } from "./SearchList.tsx";
 import { SearchItem } from "../types/search";
 import { searchService } from "../services/searchService";
 import { PlanetData, PathPoint, ArmyData } from "../types/game";
+import { ConnectButton } from "./ConnectButton";
 
 export const StarMap = () => {
   const [selectedPlanet, setSelectedPlanet] = useState<number | null>(null);
@@ -248,6 +249,7 @@ export const StarMap = () => {
 
   return (
     <div className="relative w-full h-full">
+      <ConnectButton />
       <Stage
         width={dimensions.width}
         height={dimensions.height}
