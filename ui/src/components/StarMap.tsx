@@ -90,6 +90,9 @@ export const StarMap = () => {
     if (selectingDestination) return;
     setSelectedPlanet(prev => {
       const newValue = prev === id ? null : id;
+      if (newValue !== null) {
+        setSelectedArmy(null);
+      }
       addLog(`Planet ${id} ${newValue === null ? 'deselected' : 'selected'}`);
       return newValue;
     });
