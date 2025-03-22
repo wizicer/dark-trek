@@ -28,24 +28,18 @@
 
 ### TODO
 - [ ] griffin permutation 算法，随机数 $\alpha, \beta$ 在每一轮取不同的值
-- [ ] salt 和 pk 添加位置
+- [ ] salt 和 pk 添加位置，进行拼接
 - [ ] bn254 和最后输出 commitment uint256 不匹配问题
-- [ ] 电路目前接的 mmic 是 circomlib，高效一点的实现是 
+- 变成 253 或者 248 位
+- [ ] 开根号
 
 
 ### 约束 positions 和 commitment
 
 在电路中根据 positions 计算出一个 commitment，约束其与输入的 commitment 一致。
 
-![](./dark-route-bloom-filter.svg)
+![](./dark-route-circuit-commitment.svg)
 
-- 取前 8 bits 作为 index
-
-- [x] 宽度固定，传入电路 ✅ 2025-03-22
-
-- mmic 太大
-- insert 
-- k 次哈希，加法乘法
 
 ### 约束 positions
 
