@@ -1,5 +1,5 @@
-import { Stage, Container } from "@pixi/react";
-import React, { useCallback, useState, useEffect, useMemo } from "react";
+import { Stage, Container, Graphics } from "@pixi/react";
+import React, { useCallback, useState, useEffect } from "react";
 import { Planet } from "./Planet.tsx";
 import { PlanetDialog } from "./PlanetDialog.tsx";
 import { Army } from "./Army.tsx";
@@ -7,33 +7,10 @@ import { ArmyDialog } from "./ArmyDialog.tsx";
 import { PathEditor } from "./PathEditor.tsx";
 import { MovingArmy } from "./MovingArmy.tsx";
 import { Grid } from "./Grid.tsx";
-import { Notification } from "./Notification.tsx";
-
-interface PlanetData {
-  id: number;
-  x: number;
-  y: number;
-  radius: number;
-  satellites: {
-    size: number;
-    orbitRadius: number;
-    orbitTilt: number;
-    speed: number;
-  }[];
-}
-
-interface PathPoint {
-  x: number;
-  y: number;
-}
-
-interface ArmyData {
-  id: number;
-  x: number;
-  y: number;
-  energy: number;
-  movingTo?: { x: number; y: number }[];
-}
+import { SearchList } from "./SearchList.tsx";
+import { SearchItem } from "../types/search";
+import { searchService } from "../services/searchService";
+import { PlanetData, PathPoint, ArmyData } from "../types/game";
 
 export const StarMap = () => {
   const [selectedPlanet, setSelectedPlanet] = useState<number | null>(null);
@@ -42,7 +19,8 @@ export const StarMap = () => {
   const [hoverPosition, setHoverPosition] = useState<PathPoint | null>(null);
   const [pathPoints, setPathPoints] = useState<PathPoint[]>([]);
   const [showDebug] = useState(false);
-  const [showNotification, setShowNotification] = useState(false);
+  const [searchItems, setSearchItems] = useState<SearchItem[]>([]);
+  const [selectedSearchId, setSelectedSearchId] = useState<number | null>(null);
   const [dimensions, setDimensions] = useState({
     width: window.innerWidth,
     height: window.innerHeight,
@@ -73,14 +51,11 @@ export const StarMap = () => {
   }));
 
   const [armies, setArmies] = useState<ArmyData[]>(
-    useMemo<ArmyData[]>(
-      () => [
-        { id: 1, x: 300, y: 300, energy: 100 },
-        { id: 2, x: 700, y: 200, energy: 150 },
-        { id: 3, x: 500, y: 600, energy: 80 },
-      ],
-      []
-    )
+    [
+      { id: 1, x: 300, y: 300, energy: 100 },
+      { id: 2, x: 700, y: 200, energy: 150 },
+      { id: 3, x: 500, y: 600, energy: 80 },
+    ]
   );
 
   const addLog = useCallback((message: string) => {
@@ -105,12 +80,36 @@ export const StarMap = () => {
   }, [addLog]);
 
   useEffect(() => {
-    // Show notification after 5 seconds
-    const timer = setTimeout(() => {
-      setShowNotification(true);
-    }, 5000);
+    // Show first notification after 3 seconds
+    const firstTimer = setTimeout(() => {
+      const item = searchService.createSearchItem("A new army movement started");
+      setSearchItems((prev) => [...prev, item]);
+    }, 3000);
 
-    return () => clearTimeout(timer);
+    // Generate new notifications every 60 seconds
+    const intervalTimer = setInterval(() => {
+      const item = searchService.createSearchItem("A new army movement started");
+      setSearchItems((prev) => [...prev, item]);
+    }, 60000);
+
+    return () => {
+      clearTimeout(firstTimer);
+      clearInterval(intervalTimer);
+    };
+  }, []);
+
+  useEffect(() => {
+    searchService.setOnItemsChange(setSearchItems);
+    searchService.startTimer(planets);
+    return () => searchService.stopTimer();
+  }, [planets]);
+
+  const handleSearchItemUpdate = useCallback((item: SearchItem) => {
+    searchService.updateSearchItem(item);
+  }, []);
+
+  const handleSearchItemDismiss = useCallback((id: number) => {
+    searchService.dismissSearchItem(id);
   }, []);
 
   const handlePlanetClick = useCallback(
@@ -239,6 +238,10 @@ export const StarMap = () => {
     addLog("Undid last path point");
   }, [addLog]);
 
+  const handleSearchItemSelect = useCallback((id: number) => {
+    setSelectedSearchId((prev) => (prev === id ? null : id));
+  }, []);
+
   return (
     <div className="relative w-full h-full">
       <Stage
@@ -254,6 +257,23 @@ export const StarMap = () => {
         onClick={handleStageClick}
       >
         <Container eventMode="dynamic" interactiveChildren={true}>
+          {/* Show search points for selected search item */}
+          {selectedSearchId && (
+            <Graphics
+              draw={(g) => {
+                g.clear();
+                const item = searchItems.find((i) => i.id === selectedSearchId);
+                if (!item) return;
+
+                item.searchPoints.forEach((point) => {
+                  g.beginFill(0x22c55e, 0.3);
+                  g.drawCircle(point.x, point.y, 5);
+                  g.endFill();
+                });
+              }}
+            />
+          )}
+
           {(selectedPlanet || selectedArmy || selectingDestination) && (
             <Grid
               width={dimensions.width}
@@ -348,12 +368,12 @@ export const StarMap = () => {
                 }}
               />
             )}
-          {showNotification && (
-            <Notification
-              message="A new army movement started"
-              onDismiss={() => setShowNotification(false)}
-            />
-          )}
+          <SearchList
+            items={searchItems}
+            onItemUpdate={handleSearchItemUpdate}
+            onItemDismiss={handleSearchItemDismiss}
+            onItemSelect={handleSearchItemSelect}
+          />
         </Container>
       </Stage>
       {showDebug && (
