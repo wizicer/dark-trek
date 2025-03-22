@@ -266,11 +266,7 @@ export const StarMap = () => {
                   y={army.y}
                   onClick={() => handleArmyClick(army.id)}
                   selected={selectedArmy === army.id}
-                  onHover={(isHovered: boolean) =>
-                    addLog(
-                      `Army ${army.id} ${isHovered ? "hovered" : "unhovered"}`
-                    )
-                  }
+                  onHover={() => {}}
                 />
               )}
             </React.Fragment>
