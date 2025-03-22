@@ -5,6 +5,7 @@ import { PlanetDialog } from './PlanetDialog.tsx';
 import { Army } from './Army.tsx';
 import { ArmyDialog } from './ArmyDialog.tsx';
 import { PathEditor } from './PathEditor.tsx';
+import { MovingArmy } from './MovingArmy.tsx';
 import { Grid } from './Grid.tsx';
 
 interface PlanetData {
@@ -30,6 +31,7 @@ interface ArmyData {
   x: number;
   y: number;
   energy: number;
+  movingTo?: { x: number; y: number }[];
 }
 
 export const StarMap = () => {
@@ -144,16 +146,22 @@ export const StarMap = () => {
 
   const handleSetTarget = useCallback(() => {
     if (pathPoints.length === 0) return;
-
-    addLog(`Set target with path: ${pathPoints.map(p => `(${p.x},${p.y})`).join(' -> ')}`);
-    // TODO: Handle send event with complete path
+    
+    addLog('Target set with ' + pathPoints.length + ' points');
+    
+    if (selectedArmy) {
+      const army = armies.find(a => a.id === selectedArmy);
+      if (army) {
+        army.movingTo = pathPoints;
+      }
+    }
     
     setSelectingDestination(false);
     setSelectedPlanet(null);
     setSelectedArmy(null);
     setPathPoints([]);
     setHoverPosition(null);
-  }, [pathPoints, addLog]);
+  }, [pathPoints, addLog, selectedArmy, armies]);
 
   const handleUndo = useCallback(() => {
     setPathPoints(prev => {
@@ -206,14 +214,24 @@ export const StarMap = () => {
             />
           )}
           {armies.map(army => (
-            <Army
-              key={army.id}
-              x={army.x}
-              y={army.y}
-              onClick={() => handleArmyClick(army.id)}
-              selected={selectedArmy === army.id}
-              onHover={(isHovered: boolean) => addLog(`Army ${army.id} ${isHovered ? 'hovered' : 'unhovered'}`)}
-            />
+            <React.Fragment key={army.id}>
+              {army.movingTo ? (
+                <MovingArmy
+                  startX={army.x}
+                  startY={army.y}
+                  pathPoints={army.movingTo}
+                  speed={50} // pixels per second
+                />
+              ) : (
+                <Army
+                  x={army.x}
+                  y={army.y}
+                  onClick={() => handleArmyClick(army.id)}
+                  selected={selectedArmy === army.id}
+                  onHover={(isHovered: boolean) => addLog(`Army ${army.id} ${isHovered ? 'hovered' : 'unhovered'}`)}
+                />
+              )}
+            </React.Fragment>
           ))}
           {planets.map(planet => (
             <Planet
