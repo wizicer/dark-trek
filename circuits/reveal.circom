@@ -6,6 +6,7 @@ include "../node_modules/circomlib/circuits/mimc.circom";
 include "../node_modules/circomlib/circuits/switcher.circom";
 include "./griffin/griffin.circom";
 include "./utils/utils.circom";
+// include "./slot/slot.circom";
 
 // reveal circuits
 template Reveal(POINT_NUM, MAP_WIDTH, MIMC_ROUND) {
@@ -49,7 +50,7 @@ template Reveal(POINT_NUM, MAP_WIDTH, MIMC_ROUND) {
     num2Bits_salt.out ==> salt_bits;
 
     // concatenate the salt and pk into positions
-    signal positions_concat[POINT_NUM][256];
+    signal positions_concat[POINT_NUM][254];
     for (var i = 0; i < POINT_NUM; i++){
         for (var j = 0; j < 64; j++){
             positions_concat[i][j] <== positions_bits[i][j];
@@ -57,7 +58,7 @@ template Reveal(POINT_NUM, MAP_WIDTH, MIMC_ROUND) {
         for (var j = 0; j < 160; j++){
             positions_concat[i][j + 64] <== pk_bits[j];
         }
-        for (var j = 0; j < 32; j++){
+        for (var j = 0; j < 30; j++){
             positions_concat[i][j + 224] <== salt_bits[j];
         }
     }
@@ -66,10 +67,10 @@ template Reveal(POINT_NUM, MAP_WIDTH, MIMC_ROUND) {
     component bits2num_positions[POINT_NUM];
     signal positions_num[POINT_NUM];
     for (var i = 0; i < POINT_NUM; i++){
-        bits2num_positions[i] = Bits2Num(256);
+        bits2num_positions[i] = Bits2Num(254);
         bits2num_positions[i].in <== positions_concat[i];
         bits2num_positions[i].out ==> positions_num[i];
-        log("positions_num[i]", positions_num[i]);
+        // log("positions_num[i]", positions_num[i]);
     }
    
     // ------------------------------------------------------------------------------
@@ -78,6 +79,66 @@ template Reveal(POINT_NUM, MAP_WIDTH, MIMC_ROUND) {
     signal position_griffin[POINT_NUM];
     griffin_perm.inp <== positions_num;
     griffin_perm.out ==> position_griffin;
+
+    // // ------------------------------------------------------------------------------
+    // // test slot hash
+    // component slot_test = slot();
+    // signal slot_test_result;
+    // slot_test.x <== -1;
+    // slot_test.result ==> slot_test_result;
+    // log("slot_test_result", slot_test_result);
+
+    // // ------------------------------------------------------------------------------
+    // // get slot hash
+    // component slot[MIMC_ROUND][POINT_NUM];
+    // component num_truncate_bits[MIMC_ROUND][POINT_NUM];
+    // component bits_to_num[MIMC_ROUND][POINT_NUM];
+    // signal slot_hash[POINT_NUM][MIMC_ROUND];
+    // signal hash_to_bits[MIMC_ROUND][POINT_NUM][8];
+    // signal bits_to_index[MIMC_ROUND][POINT_NUM];
+
+    // for (var i = 0; i < POINT_NUM; i++){
+    //     log("i", i);
+    //     log("position_griffin[i]", position_griffin[i]);
+    //     slot[0][i] = slot();
+    //     slot[0][i].x <== position_griffin[i];
+    //     slot[0][i].result ==> slot_hash[i][0];
+
+    //     // transform hash to bits
+    //     // take the first 8 bits from the hash
+    //     num_truncate_bits[0][i] = NumTruncateBits(8);
+    //     num_truncate_bits[0][i].in <== slot_hash[i][0];
+    //     num_truncate_bits[0][i].out ==> hash_to_bits[0][i];
+    
+    //     // transform bits to index
+    //     bits_to_num[0][i] = Bits2Num(8);
+    //     bits_to_num[0][i].in <== hash_to_bits[0][i];
+    //     bits_to_num[0][i].out ==> bits_to_index[0][i];
+
+    //     // test_compute_bit_array[bits_to_index[0][i]] = 1;
+    // }
+
+    // for (var round = 1; round < MIMC_ROUND; round++){
+    //     for (var i = 0; i < POINT_NUM; i++){
+    //         slot[round][i] = slot();
+    //         slot[round][i].x <== slot_hash[i][round - 1];
+    //         slot[round][i].result ==> slot_hash[i][round];
+
+    //         // transform hash to bits
+    //         // take the first 8 bits from the hash
+    //         num_truncate_bits[round][i] = NumTruncateBits(8);
+    //         num_truncate_bits[round][i].in <== slot_hash[i][round];
+    //         num_truncate_bits[round][i].out ==> hash_to_bits[round][i];
+
+    //         // transform bits to index
+    //         bits_to_num[round][i] = Bits2Num(8);
+    //         bits_to_num[round][i].in <== hash_to_bits[round][i];
+    //         bits_to_num[round][i].out ==> bits_to_index[round][i];
+
+    //         // for test
+    //         // test_compute_bit_array[bits_to_index[round][i]] = 1;
+    //     }
+    // }
 
     // ------------------------------------------------------------------------------
     // get mimc hash
