@@ -210,6 +210,9 @@ template Reveal(POINT_NUM, MAP_WIDTH, MIMC_ROUND) {
     //------------------------------------------------------------------------------
     // 3. output the correct position hash
     //------------------------------------------------------------------------------
+    
+    // if duration < POINT_NUM - 1: duration_flag = 0
+    // if duration >= POINT_NUM - 1: duration_flag = 1
     signal duration_flag;
     component gt = GreaterEqThan(8);
     gt.in[0] <== duration;
@@ -217,15 +220,22 @@ template Reveal(POINT_NUM, MAP_WIDTH, MIMC_ROUND) {
     gt.in[1] <== POINT_NUM - 1;
     gt.out ==> duration_flag;
 
-    // make sure the index is valid
-    signal index_left <== duration_flag * POINT_NUM;
-    signal index_right <== (1 - duration_flag) * duration;
-    signal index <== index_left + index_right;
+    // if duration < POINT_NUM - 1 : hash_duration = position_griffin[duration]
+    signal hash_duration[POINT_NUM + 1];
+    signal index_flag[POINT_NUM];
+    hash_duration[0] <== 0;
+    for (var i = 0; i < POINT_NUM; i++){
+        index_flag[i] <== IsZero()(duration - i);
+        hash_duration[i + 1] <== hash_duration[i] + index_flag[i] * position_griffin[i];
+        // log("position_griffin[i]", position_griffin[i]);
+    }
 
-    // component mimc_hash_temp = MiMC7(91);
-    // mimc_hash_temp.x_in <== positions[index];
-    // mimc_hash_temp.k <== pk;
-    // mimc_hash_temp.out ==> position_hash;
+    // if duration < POINT_NUM - 1: position_hash =  position_griffin[duration]
+    // if duration >= POINT_NUM - 1: position_hash =  position_griffin[POINT_NUM - 1]
+    signal position_hash_left <== duration_flag * position_griffin[POINT_NUM - 1];  
+    signal position_hash_right <== (1 - duration_flag) * hash_duration[POINT_NUM];
+    position_hash <== position_hash_left + position_hash_right;
+    // log("position_hash", position_hash);
 
     //------------------------------------------------------------------------------
     // 4. output the correct energy
