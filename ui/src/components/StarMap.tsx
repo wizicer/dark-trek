@@ -366,6 +366,7 @@ export const StarMap = () => {
             onItemUpdate={handleSearchItemUpdate}
             onItemDismiss={handleSearchItemDismiss}
             onItemSelect={handleSearchItemSelect}
+            selectedSearchId={selectedSearchId || -1}
           />
         </Container>
       </Stage>

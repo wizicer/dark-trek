@@ -10,9 +10,10 @@ interface SearchListProps {
   onItemUpdate: (item: SearchItemType) => void;
   onItemDismiss: (id: number) => void;
   onItemSelect: (id: number) => void;
+  selectedSearchId: number;
 }
 
-export const SearchList = ({ items, onItemUpdate, onItemDismiss, onItemSelect }: SearchListProps) => {
+export const SearchList = ({ items, onItemUpdate, onItemDismiss, onItemSelect, selectedSearchId }: SearchListProps) => {
   const [showAll, setShowAll] = useState(false);
 
   const handleClick = (handler: () => void) => (e: FederatedPointerEvent) => {
@@ -67,7 +68,7 @@ export const SearchList = ({ items, onItemUpdate, onItemDismiss, onItemSelect }:
           <Container key={item.id} position={[0, index * 70]}>
             <SearchItemComponent
               item={item}
-              isSelected={item.isSearching}
+              isSelected={item.id === selectedSearchId}
               onSelect={onItemSelect}
               onDismiss={onItemDismiss}
               onStartSearch={handleStartSearch}

@@ -25,33 +25,44 @@ export const SearchItemComponent = ({ item, isSelected, onSelect, onDismiss, onS
           g.beginFill(0x000000, isSelected ? 0.9 : 0.7);
           g.lineStyle(2, isSelected ? 0x22c55e : 0x4a5568);
           g.drawRoundedRect(0, 0, 280, 60, 5);
+          if (isSelected) {
+            g.beginFill(0x22c55e, 0.2);
+            g.drawRoundedRect(2, 2, 276, 56, 4);
+          }
           g.endFill();
         }}
         eventMode="static"
         onclick={handleClick(() => onSelect(item.id))}
       />
       <Text
-        text={item.message}
+        text={`#${item.id} - ${item.message}`}
         anchor={[0, 0]}
         position={[10, 10]}
         style={
           new TextStyle({
-            fill: 0xffffff,
-            fontSize: 14
+            fill: isSelected ? 0x22ff22 : 0xffffff,
+            fontSize: 14,
+            fontWeight: isSelected ? 'bold' : 'normal'
           })
         }
       />
       <Container
         eventMode="static"
-        onclick={handleClick(() => item.isSearching ? onDismiss(item.id) : onStartSearch(item.id))}
+        onclick={handleClick(item.isSearching ? () => onDismiss(item.id) : () => onStartSearch(item.id))}
         cursor="pointer"
         position={[10, 30]}
       >
         <Graphics
           draw={g => {
             g.clear();
-            g.beginFill(item.isSearching ? 0xef4444 : 0x22c55e, item.isSearching ? 1 : item.countdown === 0 ? 0.5 : 1);
+            const color = item.isSearching ? 0xef4444 : 0x22c55e;
+            const alpha = item.isSearching ? 1 : item.countdown === 0 ? 0.5 : 1;
+            g.beginFill(color, alpha);
             g.drawRoundedRect(0, 0, 120, 20, 5);
+            if (isSelected) {
+              g.lineStyle(1, 0x22ff22);
+              g.drawRoundedRect(0, 0, 120, 20, 5);
+            }
             g.endFill();
           }}
         />
@@ -62,7 +73,8 @@ export const SearchItemComponent = ({ item, isSelected, onSelect, onDismiss, onS
           style={
             new TextStyle({
               fill: 0xffffff,
-              fontSize: 12
+              fontSize: 12,
+              fontWeight: isSelected ? 'bold' : 'normal'
             })
           }
         />
@@ -79,6 +91,10 @@ export const SearchItemComponent = ({ item, isSelected, onSelect, onDismiss, onS
               g.clear();
               g.beginFill(0x3b82f6);
               g.drawRoundedRect(0, 0, 120, 20, 5);
+              if (isSelected) {
+                g.lineStyle(1, 0x22ff22);
+                g.drawRoundedRect(0, 0, 120, 20, 5);
+              }
               g.endFill();
             }}
           />
