@@ -20,14 +20,15 @@ export const StarMap = () => {
   const [pathPoints, setPathPoints] = useState<PathPoint[]>([]);
   const [hoverPosition, setHoverPosition] = useState<PathPoint | null>(null);
   const [searchItems, setSearchItems] = useState<SearchItem[]>([]);
-  const [currentPlayerId, setCurrentPlayerId] = useState<number>(1);
+  const [currentPlayerId] = useState<number>(1);
   const [logs, setLogs] = useState<string[]>([]);
   const [showDebug] = useState(false);
   const [dimensions, setDimensions] = useState({
     width: window.innerWidth,
     height: window.innerHeight,
   });
-  const planets: PlanetData[] = [
+
+  const [planets] = useState<PlanetData[]>([
     { id: 1, x: 200, y: 200, radius: 30, playerId: 1 },
     { id: 2, x: 400, y: 300, radius: 40, playerId: 2 },
     { id: 3, x: 600, y: 200, radius: 35, playerId: 0 },
@@ -49,7 +50,7 @@ export const StarMap = () => {
         speed: 0.01 + Math.random() * 0.02,
       },
     ],
-  }));
+  })));
 
   const [armies, setArmies] = useState<ArmyData[]>([
     { id: 1, x: 250, y: 250, energy: 100, playerId: 1 },
@@ -308,14 +309,17 @@ export const StarMap = () => {
             <React.Fragment key={army.id}>
               {army.movingTo ? (
                 <MovingArmy
+                  key={army.id}
                   id={army.id}
                   startX={army.x}
                   startY={army.y}
-                  pathPoints={army.movingTo}
+                  pathPoints={army.movingTo!}
                   speed={50}
                   energy={army.energy}
                   selected={selectedArmy === army.id}
                   onSelect={() => handleArmyClick(army.id)}
+                  playerId={army.playerId}
+                  currentPlayerId={currentPlayerId}
                   onReveal={() => addLog(`Reveal army ${army.id}`)}
                 />
               ) : (
@@ -361,17 +365,13 @@ export const StarMap = () => {
             !selectingDestination &&
             !armies.find((a) => a.id === selectedArmy)?.movingTo && (
               <ArmyDialog
-                {...armies.find((a) => a.id === selectedArmy)!}
                 x={(armies.find((a) => a.id === selectedArmy)?.x ?? 0) + 120}
                 y={armies.find((a) => a.id === selectedArmy)?.y ?? 0}
-                onClose={() => {
-                  setSelectedArmy(null);
-                  addLog(`Army ${selectedArmy} dialog closed`);
-                }}
-                onSend={() => {
-                  setSelectingDestination(true);
-                  addLog(`Setting destination for army ${selectedArmy}`);
-                }}
+                energy={armies.find((a) => a.id === selectedArmy)?.energy ?? 0}
+                onClose={() => setSelectedArmy(null)}
+                onSend={() => setSelectingDestination(true)}
+                playerId={armies.find((a) => a.id === selectedArmy)?.playerId ?? 0}
+                currentPlayerId={currentPlayerId}
               />
             )}
           <SearchList

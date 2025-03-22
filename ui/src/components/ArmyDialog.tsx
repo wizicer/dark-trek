@@ -3,19 +3,23 @@ import { TextStyle } from 'pixi.js';
 import { FederatedPointerEvent } from '@pixi/events';
 
 interface ArmyDialogProps {
+  x: number;
+  y: number;
   energy: number;
   onClose: () => void;
   onSend: () => void;
   onReveal?: () => void;
-  x: number;
-  y: number;
+  playerId: number;
+  currentPlayerId: number;
 }
 
-export const ArmyDialog = ({ energy, onClose, onSend, onReveal, x, y }: ArmyDialogProps) => {
+export const ArmyDialog = ({ energy, onClose, onSend, onReveal, x, y, playerId, currentPlayerId }: ArmyDialogProps) => {
   const handleClick = (handler: () => void) => (e: FederatedPointerEvent) => {
     e.stopPropagation();
     handler();
   };
+
+  const canSendArmy = playerId === currentPlayerId;
 
   return (
     <Container position={[x, y]} eventMode="static">
@@ -65,7 +69,7 @@ export const ArmyDialog = ({ energy, onClose, onSend, onReveal, x, y }: ArmyDial
           }
         />
       </Container>
-      {!onReveal && (
+      {canSendArmy && !onReveal && (
         <Container
           eventMode="static"
           onclick={handleClick(onSend)}
@@ -93,7 +97,7 @@ export const ArmyDialog = ({ energy, onClose, onSend, onReveal, x, y }: ArmyDial
           />
         </Container>
       )}
-      {onReveal && (
+      {canSendArmy && onReveal && (
         <Container
           eventMode="static"
           onclick={handleClick(onReveal)}

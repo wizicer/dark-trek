@@ -11,6 +11,8 @@ interface MovingArmyProps {
   speed: number; // pixels per second
   energy: number;
   id: number;
+  playerId: number;
+  currentPlayerId: number;
   selected?: boolean;
   onSelect?: (id: number) => void;
   onReveal?: () => void;
@@ -23,6 +25,8 @@ export const MovingArmy = ({
   speed,
   energy,
   id,
+  playerId,
+  currentPlayerId,
   selected = false,
   onSelect,
   onReveal
@@ -134,6 +138,8 @@ export const MovingArmy = ({
           onClose={handleClose}
           onSend={() => {}}
           onReveal={handleReveal}
+          playerId={playerId}
+          currentPlayerId={currentPlayerId}
         />
       )}
     </>

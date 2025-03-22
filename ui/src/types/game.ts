@@ -22,7 +22,7 @@ export interface ArmyData {
   x: number;
   y: number;
   energy: number;
-  playerId?: number;
+  playerId: number;
   movingTo?: { x: number; y: number }[];
 }
 
