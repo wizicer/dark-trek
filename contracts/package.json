@@ -1,0 +1,13 @@
+{
+  "name": "contracts",
+  "version": "1.0.0",
+  "scripts": {
+    "build:contracts": "forge build && typechain --target ethers-v6 --out-dir ../ui/src/contracts out/**/*.json",
+    "deploy:contracts": "bash ./scripts/deploy.sh",
+    "build": "npm run build:contracts"
+  },
+  "devDependencies": {
+    "@typechain/ethers-v6": "^0.5.1",
+    "typechain": "^8.3.2"
+  }
+}

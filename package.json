@@ -1,4 +1,9 @@
 {
-  "workspaces": ["ui"],
-  "private": true
+  "workspaces": ["ui", "circuits", "contracts"],
+  "private": true,
+  "scripts": {
+    "build:circuits": "cd circuits && npm run build",
+    "build:contracts": "cd contracts && npm run build",
+    "build": "npm run build:circuits && npm run build:contracts"
+  }
 }

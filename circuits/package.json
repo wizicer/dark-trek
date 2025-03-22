@@ -1,0 +1,13 @@
+{
+  "name": "circuits",
+  "version": "1.0.0",
+  "scripts": {
+    "build:reveal": "bash ./scripts/compile.sh reveal && bash ./scripts/cpcircuit.sh reveal",
+    "build:circuits": "npm run build:reveal",
+    "setup:ptau": "wget -O pot_final.ptau https://hermez.s3-eu-west-1.amazonaws.com/powersOfTau28_hez_final_15.ptau",
+    "build": "npm run build:circuits"
+  },
+  "devDependencies": {
+    "circomlib": "^2.0.5"
+  }
+}
