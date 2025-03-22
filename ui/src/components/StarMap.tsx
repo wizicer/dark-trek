@@ -1,7 +1,9 @@
 import { Stage, Container } from '@pixi/react';
-import React, { useCallback, useState, useEffect } from 'react';
+import React, { useCallback, useState, useEffect, useMemo } from 'react';
 import { Planet } from './Planet.tsx';
 import { PlanetDialog } from './PlanetDialog.tsx';
+import { Army } from './Army.tsx';
+import { ArmyDialog } from './ArmyDialog.tsx';
 import { PathEditor } from './PathEditor.tsx';
 import { Grid } from './Grid.tsx';
 
@@ -23,8 +25,16 @@ interface PathPoint {
   y: number;
 }
 
+interface ArmyData {
+  id: number;
+  x: number;
+  y: number;
+  energy: number;
+}
+
 export const StarMap = () => {
   const [selectedPlanet, setSelectedPlanet] = useState<number | null>(null);
+  const [selectedArmy, setSelectedArmy] = useState<number | null>(null);
   const [selectingDestination, setSelectingDestination] = useState(false);
   const [hoverPosition, setHoverPosition] = useState<PathPoint | null>(null);
   const [pathPoints, setPathPoints] = useState<PathPoint[]>([]);
@@ -55,6 +65,12 @@ export const StarMap = () => {
     ]
   }));
 
+  const armies = useMemo<ArmyData[]>(() => [
+    { id: 1, x: 300, y: 300, energy: 100 },
+    { id: 2, x: 700, y: 200, energy: 150 },
+    { id: 3, x: 500, y: 600, energy: 80 },
+  ], []);
+
   const addLog = useCallback((message: string) => {
     setLogs(prev => [...prev.slice(-4), `[${new Date().toLocaleTimeString()}] ${message}`]);
     console.log(message);
@@ -79,6 +95,18 @@ export const StarMap = () => {
     });
   }, [addLog, selectingDestination]);
 
+  const handleArmyClick = useCallback((id: number) => {
+    if (selectingDestination) return;
+    setSelectedArmy(prev => {
+      const newValue = prev === id ? null : id;
+      if (newValue !== null) {
+        setSelectedPlanet(null);
+      }
+      addLog(`Army ${id} ${newValue === null ? 'deselected' : 'selected'}`);
+      return newValue;
+    });
+  }, [addLog, selectingDestination]);
+
   const handleStagePointerMove = useCallback((e: React.PointerEvent<HTMLCanvasElement>) => {
     if (!selectingDestination) return;
     const cellSize = 100;
@@ -92,10 +120,11 @@ export const StarMap = () => {
     if (!selectingDestination || !hoverPosition) return;
 
     const sourcePlanet = planets.find(p => p.id === selectedPlanet);
-    if (!sourcePlanet && pathPoints.length === 0) return;
+    const sourceArmy = armies.find(a => a.id === selectedArmy);
+    if (!sourcePlanet && !sourceArmy && pathPoints.length === 0) return;
 
     const startPoint = pathPoints.length === 0 
-      ? { x: sourcePlanet!.x, y: sourcePlanet!.y }
+      ? (sourcePlanet ? { x: sourcePlanet.x, y: sourcePlanet.y } : { x: sourceArmy!.x, y: sourceArmy!.y })
       : pathPoints[pathPoints.length - 1];
 
     // Check if the new point creates a valid 8-directional path
@@ -108,7 +137,7 @@ export const StarMap = () => {
       setPathPoints(prev => [...prev, { ...hoverPosition }]);
       addLog(`Added path point at (${hoverPosition.x}, ${hoverPosition.y})`);
     }
-  }, [selectingDestination, hoverPosition, selectedPlanet, planets, pathPoints, addLog]);
+  }, [selectingDestination, hoverPosition, selectedPlanet, selectedArmy, planets, armies, pathPoints, addLog]);
 
   const handleSetTarget = useCallback(() => {
     if (pathPoints.length === 0) return;
@@ -118,6 +147,7 @@ export const StarMap = () => {
     
     setSelectingDestination(false);
     setSelectedPlanet(null);
+    setSelectedArmy(null);
     setPathPoints([]);
     setHoverPosition(null);
   }, [pathPoints, addLog]);
@@ -145,7 +175,7 @@ export const StarMap = () => {
         onClick={handleStageClick}
       >
         <Container eventMode="dynamic" interactiveChildren={true}>
-          {(selectedPlanet || selectingDestination) && (
+          {(selectedPlanet || selectedArmy || selectingDestination) && (
             <Grid
               width={dimensions.width}
               height={dimensions.height}
@@ -154,26 +184,34 @@ export const StarMap = () => {
               alpha={0.8}
             />
           )}
-          {selectingDestination && (
-            <>
-              <Grid
-                width={dimensions.width}
-                height={dimensions.height}
-                cellSize={100}
-                color={0x444444}
-                alpha={0.8}
-              />
-              {selectedPlanet && (
-                <PathEditor
-                  sourcePlanet={planets.find(p => p.id === selectedPlanet)!}
-                  pathPoints={pathPoints}
-                  hoverPosition={hoverPosition}
-                  onSetTarget={handleSetTarget}
-                  onUndo={handleUndo}
-                />
-              )}
-            </>
+          {selectingDestination && selectedPlanet && (
+            <PathEditor
+              sourcePlanet={planets.find(p => p.id === selectedPlanet)!}
+              pathPoints={pathPoints}
+              hoverPosition={hoverPosition}
+              onSetTarget={handleSetTarget}
+              onUndo={handleUndo}
+            />
           )}
+          {selectingDestination && selectedArmy && (
+            <PathEditor
+              sourcePlanet={armies.find(a => a.id === selectedArmy)!}
+              pathPoints={pathPoints}
+              hoverPosition={hoverPosition}
+              onSetTarget={handleSetTarget}
+              onUndo={handleUndo}
+            />
+          )}
+          {armies.map(army => (
+            <Army
+              key={army.id}
+              x={army.x}
+              y={army.y}
+              onClick={() => handleArmyClick(army.id)}
+              selected={selectedArmy === army.id}
+              onHover={(isHovered: boolean) => addLog(`Army ${army.id} ${isHovered ? 'hovered' : 'unhovered'}`)}
+            />
+          ))}
           {planets.map(planet => (
             <Planet
               key={planet.id}
@@ -193,6 +231,18 @@ export const StarMap = () => {
               }}
               x={(planets.find(p => p.id === selectedPlanet)?.x ?? 0) + 120}
               y={planets.find(p => p.id === selectedPlanet)?.y ?? 0}
+            />
+          )}
+          {selectedArmy && !selectingDestination && (
+            <ArmyDialog
+              energy={armies.find(a => a.id === selectedArmy)?.energy ?? 0}
+              onClose={() => setSelectedArmy(null)}
+              onSend={() => {
+                setSelectingDestination(true);
+                setPathPoints([]);
+              }}
+              x={(armies.find(a => a.id === selectedArmy)?.x ?? 0) + 120}
+              y={armies.find(a => a.id === selectedArmy)?.y ?? 0}
             />
           )}
         </Container>
