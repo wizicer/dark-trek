@@ -70,13 +70,15 @@ export const StarMap = () => {
     ],
   }));
 
-  const armies = useMemo<ArmyData[]>(
-    () => [
-      { id: 1, x: 300, y: 300, energy: 100 },
-      { id: 2, x: 700, y: 200, energy: 150 },
-      { id: 3, x: 500, y: 600, energy: 80 },
-    ],
-    []
+  const [armies, setArmies] = useState<ArmyData[]>(
+    useMemo<ArmyData[]>(
+      () => [
+        { id: 1, x: 300, y: 300, energy: 100 },
+        { id: 2, x: 700, y: 200, energy: 150 },
+        { id: 3, x: 500, y: 600, energy: 80 },
+      ],
+      []
+    )
   );
 
   const addLog = useCallback((message: string) => {
@@ -187,6 +189,20 @@ export const StarMap = () => {
       if (army) {
         army.movingTo = pathPoints;
       }
+    } else if (selectedPlanet) {
+      // Create a new army from the planet
+      const planet = planets.find((p) => p.id === selectedPlanet);
+      if (planet) {
+        const newArmy = {
+          id: armies.length + 1,
+          x: planet.x,
+          y: planet.y,
+          energy: 100,
+          movingTo: pathPoints,
+        };
+        setArmies((prev) => [...prev, newArmy]);
+        addLog(`Created new army ${newArmy.id} from planet ${selectedPlanet}`);
+      }
     }
 
     setSelectingDestination(false);
@@ -194,7 +210,15 @@ export const StarMap = () => {
     setSelectedArmy(null);
     setPathPoints([]);
     setHoverPosition(null);
-  }, [pathPoints, addLog, selectedArmy, armies]);
+  }, [
+    pathPoints,
+    addLog,
+    selectedArmy,
+    armies,
+    selectedPlanet,
+    planets,
+    setArmies,
+  ]);
 
   const handleUndo = useCallback(() => {
     setPathPoints((prev) => {

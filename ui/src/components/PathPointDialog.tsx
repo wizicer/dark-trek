@@ -1,5 +1,6 @@
 import { Container, Text, Graphics } from '@pixi/react';
 import { TextStyle } from 'pixi.js';
+import { FederatedPointerEvent } from '@pixi/events';
 
 interface PathPointDialogProps {
   onSetTarget: () => void;
@@ -7,8 +8,13 @@ interface PathPointDialogProps {
 }
 
 export const PathPointDialog = ({ onSetTarget, onUndo }: PathPointDialogProps) => {
+  const handleClick = (handler: () => void) => (e: FederatedPointerEvent) => {
+    e.stopPropagation();
+    handler();
+  };
+
   return (
-    <Container position={[10, 10]}>
+    <Container position={[10, 10]} eventMode="static">
       <Graphics
         draw={g => {
           g.clear();
@@ -19,8 +25,8 @@ export const PathPointDialog = ({ onSetTarget, onUndo }: PathPointDialogProps) =
         }}
       />
       <Container
-        eventMode="dynamic"
-        onclick={onUndo}
+        eventMode="static"
+        onclick={handleClick(onUndo)}
         cursor="pointer"
         position={[5, 5]}
       >
@@ -45,8 +51,8 @@ export const PathPointDialog = ({ onSetTarget, onUndo }: PathPointDialogProps) =
         />
       </Container>
       <Container
-        eventMode="dynamic"
-        onclick={onSetTarget}
+        eventMode="static"
+        onclick={handleClick(onSetTarget)}
         cursor="pointer"
         position={[85, 5]}
       >
@@ -59,7 +65,7 @@ export const PathPointDialog = ({ onSetTarget, onUndo }: PathPointDialogProps) =
           }}
         />
         <Text
-          text="Set Target"
+          text="Set"
           anchor={0.5}
           position={[35, 15]}
           style={
