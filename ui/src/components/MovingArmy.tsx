@@ -1,6 +1,7 @@
 import { Graphics } from '@pixi/react';
 import { useCallback, useEffect, useState } from 'react';
 import { Graphics as PixiGraphics } from 'pixi.js';
+import { SpaceshipIcon } from './SpaceshipIcon';
 
 interface MovingArmyProps {
   startX: number;
@@ -47,46 +48,6 @@ export const MovingArmy = ({ startX, startY, pathPoints, speed }: MovingArmyProp
     return () => cancelAnimationFrame(animationFrame);
   }, [position, currentSegment, pathPoints, speed]);
 
-  const drawSpaceship = useCallback((g: PixiGraphics, x: number, y: number, angle: number) => {
-    const size = 15;
-    const cos = Math.cos(angle);
-    const sin = Math.sin(angle);
-
-    // Helper function to rotate point around center
-    const rotatePoint = (px: number, py: number) => {
-      const rx = (px - x) * cos - (py - y) * sin + x;
-      const ry = (px - x) * sin + (py - y) * cos + y;
-      return { x: rx, y: ry };
-    };
-
-    g.lineStyle(0);
-    g.beginFill(0xffffff);
-    
-    // Calculate rotated points for spaceship shape
-    const top = rotatePoint(x, y - size);
-    const rightWing = rotatePoint(x + size, y + size);
-    const rightBody = rotatePoint(x + size * 0.6, y + size * 0.8);
-    const bottom = rotatePoint(x, y + size);
-    const leftBody = rotatePoint(x - size * 0.6, y + size * 0.8);
-    const leftWing = rotatePoint(x - size, y + size);
-
-    // Draw rotated spaceship shape
-    g.moveTo(top.x, top.y);
-    g.lineTo(rightWing.x, rightWing.y);
-    g.lineTo(rightBody.x, rightBody.y);
-    g.lineTo(bottom.x, bottom.y);
-    g.lineTo(leftBody.x, leftBody.y);
-    g.lineTo(leftWing.x, leftWing.y);
-    g.lineTo(top.x, top.y);
-    g.endFill();
-
-    // Draw engine glow
-    g.beginFill(0x60a5fa, 0.5);
-    const enginePos = rotatePoint(x, y + size * 0.8);
-    g.drawCircle(enginePos.x, enginePos.y, 4);
-    g.endFill();
-  }, []);
-
   const draw = useCallback((g: PixiGraphics) => {
     g.clear();
 
@@ -113,17 +74,23 @@ export const MovingArmy = ({ startX, startY, pathPoints, speed }: MovingArmyProp
         g.lineTo(pathPoints[i].x, pathPoints[i].y);
       }
     }
+  }, [startX, startY, position, currentSegment, pathPoints]);
 
-    // Calculate rotation based on movement direction
-    let rotation = 0;
-    if (currentSegment < pathPoints.length) {
-      const target = pathPoints[currentSegment];
-      rotation = Math.atan2(target.y - position.y, target.x - position.x);
-    }
+  // Calculate rotation based on movement direction
+  let angle = 0;
+  if (currentSegment < pathPoints.length) {
+    const target = pathPoints[currentSegment];
+    angle = Math.atan2(target.y - position.y, target.x - position.x);
+  }
 
-    // Draw spaceship at current position
-    drawSpaceship(g, position.x, position.y, rotation);
-  }, [startX, startY, position, currentSegment, pathPoints, drawSpaceship]);
-
-  return <Graphics draw={draw} />;
+  return (
+    <>
+      <Graphics draw={draw} />
+      <SpaceshipIcon
+        x={position.x}
+        y={position.y}
+        angle={angle}
+      />
+    </>
+  );
 };

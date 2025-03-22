@@ -1,6 +1,7 @@
 import { Graphics } from '@pixi/react';
 import { useCallback, useEffect, useState } from 'react';
 import { Graphics as PixiGraphics } from 'pixi.js';
+import { SpaceshipIcon } from './SpaceshipIcon';
 
 interface ArmyProps {
   x: number;
@@ -39,49 +40,29 @@ export const Army = ({ x, y, selected, onClick, onHover }: ArmyProps) => {
       g.drawCircle(x, y, orbitRadius);
     }
 
-    // Calculate army position with orbit
-    const armyX = x + (selected ? Math.cos(orbitAngle) * orbitRadius : 0);
-    const armyY = y + (selected ? Math.sin(orbitAngle) * orbitRadius : 0);
-
     // Draw selection/hover indicator
     if (selected || isHovered) {
       g.lineStyle(2, selected ? 0x22c55e : 0x3b82f6);
       g.drawCircle(x, y, 25);
     }
+  }, [x, y, selected, isHovered]);
 
-    // Draw army icon
-    g.lineStyle(0);
-    g.beginFill(selected ? 0x22c55e : 0xffffff);
-    
-    const offsetX = armyX - 15;
-    const offsetY = armyY - 15;
-
-    // Draw simplified spaceship shape
-    g.moveTo(offsetX + 15, offsetY); // Top point
-    g.lineTo(offsetX + 30, offsetY + 30); // Right wing
-    g.lineTo(offsetX + 20, offsetY + 25); // Right body
-    g.lineTo(offsetX + 15, offsetY + 30); // Bottom point
-    g.lineTo(offsetX + 10, offsetY + 25); // Left body
-    g.lineTo(offsetX, offsetY + 30); // Left wing
-    g.lineTo(offsetX + 15, offsetY); // Back to top
-
-    // Draw engine glow
-    g.endFill();
-    g.beginFill(selected ? 0x4ade80 : 0x60a5fa, 0.5);
-    g.drawCircle(offsetX + 15, offsetY + 28, 4);
-    
-    g.endFill();
-  }, [x, y, selected, isHovered, orbitAngle]);
+  // Calculate army position with orbit
+  const armyX = x + (selected ? Math.cos(orbitAngle) * orbitRadius : 0);
+  const armyY = y + (selected ? Math.sin(orbitAngle) * orbitRadius : 0);
 
   return (
-    <Graphics 
-      draw={draw}
-      alpha={0.8}
-      eventMode="dynamic"
-      cursor="pointer"
-      pointertap={onClick}
-      pointerover={() => handleHoverChange(true)}
-      pointerout={() => handleHoverChange(false)}
-    />
+    <>
+      <Graphics draw={draw} />
+      <SpaceshipIcon
+        x={armyX}
+        y={armyY}
+        color={selected ? 0x22c55e : 0xffffff}
+        glowColor={selected ? 0x4ade80 : 0x60a5fa}
+        onClick={onClick}
+        onHover={handleHoverChange}
+        interactive
+      />
+    </>
   );
 };
