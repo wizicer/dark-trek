@@ -7,6 +7,7 @@ import { ArmyDialog } from "./ArmyDialog.tsx";
 import { PathEditor } from "./PathEditor.tsx";
 import { MovingArmy } from "./MovingArmy.tsx";
 import { Grid } from "./Grid.tsx";
+import { Notification } from "./Notification.tsx";
 
 interface PlanetData {
   id: number;
@@ -41,6 +42,7 @@ export const StarMap = () => {
   const [hoverPosition, setHoverPosition] = useState<PathPoint | null>(null);
   const [pathPoints, setPathPoints] = useState<PathPoint[]>([]);
   const [showDebug] = useState(false);
+  const [showNotification, setShowNotification] = useState(false);
   const [dimensions, setDimensions] = useState({
     width: window.innerWidth,
     height: window.innerHeight,
@@ -101,6 +103,15 @@ export const StarMap = () => {
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, [addLog]);
+
+  useEffect(() => {
+    // Show notification after 5 seconds
+    const timer = setTimeout(() => {
+      setShowNotification(true);
+    }, 5000);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   const handlePlanetClick = useCallback(
     (id: number) => {
@@ -337,6 +348,12 @@ export const StarMap = () => {
                 }}
               />
             )}
+          {showNotification && (
+            <Notification
+              message="A new army movement started"
+              onDismiss={() => setShowNotification(false)}
+            />
+          )}
         </Container>
       </Stage>
       {showDebug && (
