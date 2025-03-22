@@ -86,15 +86,8 @@ export const StarMap = () => {
       setSearchItems((prev) => [...prev, item]);
     }, 3000);
 
-    // Generate new notifications every 60 seconds
-    const intervalTimer = setInterval(() => {
-      const item = searchService.createSearchItem("A new army movement started");
-      setSearchItems((prev) => [...prev, item]);
-    }, 60000);
-
     return () => {
       clearTimeout(firstTimer);
-      clearInterval(intervalTimer);
     };
   }, []);
 
