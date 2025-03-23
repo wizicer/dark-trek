@@ -189,16 +189,29 @@ export const StarMap = () => {
                 armyCommitment
               );
             } else {
-              updatedArmies.push({
-                id: i,
-                energy: Number(armyEnergy),
-                startBlockNumber: Number(armyStartBlockNumber),
-                commitment: armyCommitment,
-                x: storedArmy.x,
-                y: storedArmy.y,
-                movingTo: storedArmy.movingTo,
-                playerId: currentPlayerId,
-              });
+              if (Number(armyStartBlockNumber) > 0) {
+                updatedArmies.push({
+                  id: i,
+                  energy: Number(armyEnergy),
+                  startBlockNumber: Number(armyStartBlockNumber),
+                  commitment: armyCommitment,
+                  x: storedArmy.x,
+                  y: storedArmy.y,
+                  movingTo: storedArmy.movingTo,
+                  playerId: currentPlayerId,
+                });
+              }else {
+                const lastPoint = storedArmy.movingTo? storedArmy.movingTo.at(storedArmy.movingTo.length - 1):undefined;
+                updatedArmies.push({
+                  id: i,
+                  energy: Number(armyEnergy),
+                  commitment: armyCommitment,
+                  x: lastPoint?.x ?? 0,
+                  y: lastPoint?.y ?? 0,
+                  movingTo: storedArmy.movingTo,
+                  playerId: currentPlayerId,
+                });
+              }
             }
           } else {
             const existingItem = searchItems.find((x) => x.armyId === i);
@@ -287,13 +300,14 @@ export const StarMap = () => {
         );
         console.log(proof);
         addLog(`Generated proof for army ${id}`);
+        await game?.reveal(proof.a, proof.b, proof.c, id, proof.position_hash, proof.energy);
       } catch (error) {
         console.error("Error generating proof:", error);
         addLog(`Failed to generate proof for army ${id}`);
       }
       setStatusMessage(null);
     },
-    [address, armies, addLog]
+    [address, armies, addLog, game]
   );
 
   const handleStagePointerMove = useCallback(
