@@ -36,7 +36,7 @@ export const StarMap = () => {
     height: window.innerHeight,
   });
   const { signer, address, isConnecting } = useWallet();
-  const contract = "0x4F6087C73f8dC8D1F7fbca7e5C7fBE8953A6589E";
+  const contract = "0xc61A7C3728E71C658fed1eb65eEf8Fc19C3a13BF";
   const game = GameAbi__factory.connect(contract, signer!);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [lastRetrieveInfoFromContract, setLastRetrieveInfoFromContract] = useState<number>(0);
@@ -127,7 +127,7 @@ export const StarMap = () => {
     if (!address || !game || !currentPlayerId || isConnecting) return;
     if (tryFetchingId.current > 0) return;
     const threadId = Math.floor(Math.random() * 100000);
-    if (Date.now() - lastRetrieveInfoFromContract < 60000) return;
+    if (Date.now() - lastRetrieveInfoFromContract < 10000) return;
 
     if (tryFetchingId.current === 0) tryFetchingId.current = threadId;
     if (tryFetchingId.current !== threadId) return;
@@ -189,6 +189,7 @@ export const StarMap = () => {
                 armyCommitment
               );
             } else {
+              console.log(armyStartBlockNumber)
               if (Number(armyStartBlockNumber) > 0) {
                 updatedArmies.push({
                   id: i,
@@ -202,13 +203,13 @@ export const StarMap = () => {
                 });
               }else {
                 const lastPoint = storedArmy.movingTo? storedArmy.movingTo.at(storedArmy.movingTo.length - 1):undefined;
+                console.log("lastPoint", lastPoint)
                 updatedArmies.push({
                   id: i,
                   energy: Number(armyEnergy),
                   commitment: armyCommitment,
                   x: lastPoint?.x ?? 0,
                   y: lastPoint?.y ?? 0,
-                  movingTo: storedArmy.movingTo,
                   playerId: currentPlayerId,
                 });
               }
@@ -222,6 +223,18 @@ export const StarMap = () => {
               );
               setSearchItems((prev) => [...prev, item]);
             }
+              if (Number(armyStartBlockNumber) == 0) {
+                const lastPoint = {x:500,y:400};
+                console.log("lastPoint", lastPoint)
+                updatedArmies.push({
+                  id: i,
+                  energy: Number(armyEnergy),
+                  commitment: armyCommitment,
+                  x: lastPoint?.x ?? 0,
+                  y: lastPoint?.y ?? 0,
+                  playerId: currentPlayerId,
+                });
+              }
           }
         }
         

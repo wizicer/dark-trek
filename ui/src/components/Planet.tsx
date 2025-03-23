@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import "@pixi/events";
 import { getPlayerColor } from '../types/game';
 
-const ENABLE_SATELLITE_ANIMATION = false; // Switch to control satellite animation
+const ENABLE_SATELLITE_ANIMATION = true; // Switch to control satellite animation
 
 interface SatelliteConfig {
   size: number;
