@@ -8,6 +8,7 @@ interface PlanetDialogProps {
     y: number;
     radius: number;
     playerId?: number;
+    energy: number;
   };
   onClose: () => void;
   onSendArmy: () => void;
@@ -43,31 +44,9 @@ export const PlanetDialog = ({ planet, onClose, onSendArmy, onOccupy, currentPla
         }
       />
       <Text
-        text="Resources: 1000"
+        text={`Energy: ${planet.energy}`}
         anchor={0.5}
         position={[0, -20]}
-        style={
-          new TextStyle({
-            fill: 0xcccccc,
-            fontSize: 14
-          })
-        }
-      />
-      <Text
-        text="Population: 500"
-        anchor={0.5}
-        position={[0, 0]}
-        style={
-          new TextStyle({
-            fill: 0xcccccc,
-            fontSize: 14
-          })
-        }
-      />
-      <Text
-        text="Defense: 75%"
-        anchor={0.5}
-        position={[0, 20]}
         style={
           new TextStyle({
             fill: 0xcccccc,
