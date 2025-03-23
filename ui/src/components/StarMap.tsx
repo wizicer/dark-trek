@@ -14,11 +14,10 @@ import { PlanetData, PathPoint, ArmyData } from "../types/game";
 import { ConnectButton } from "./ConnectButton";
 import { useWallet } from "../hooks/useWallet.ts";
 import { GameAbi__factory } from "../contracts/index.ts";
-import { getRevealProof } from "../services/gameProof.ts";
+import { getRevealProof, MAP_WIDTH } from "../services/gameProof.ts";
 import { getCommitment } from "../services/positionCommitment.ts";
 import { StatusOverlay } from "./StatusOverlay";
 
-const GAME_MAP_WIDTH = 20;
 const SALT = 1n;
 
 export const StarMap = () => {
@@ -255,7 +254,7 @@ export const StarMap = () => {
     async (id: number) => {
       const army = armies.find((a) => a.id === id);
       if (!army) return;
-      const positions = army.movingTo?.map((a) => BigInt(a.x + a.y * GAME_MAP_WIDTH)) || [];
+      const positions = army.movingTo?.map((a) => BigInt(a.x + a.y * MAP_WIDTH)) || [];
       setStatusMessage("Generating proof...");
 
       try {
@@ -352,7 +351,7 @@ export const StarMap = () => {
       const planet = planets.find((p) => p.id === selectedPlanet);
       if (planet) {
         const commitment = getCommitment(
-          pathPoints.map(p => BigInt(p.x + p.y * GAME_MAP_WIDTH)),
+          pathPoints,
           SALT,
           BigInt(address!)
         );
