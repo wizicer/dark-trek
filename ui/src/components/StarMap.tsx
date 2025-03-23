@@ -254,12 +254,14 @@ export const StarMap = () => {
     async (id: number) => {
       const army = armies.find((a) => a.id === id);
       if (!army) return;
-      const positions = army.movingTo?.map((a) => BigInt(a.x + a.y * MAP_WIDTH)) || [];
+      const points = [{x:army.x, y:army.y}, ...(army.movingTo??[])]
+        .map(p => ({ x: p.x/100, y: p.y/100 }))
+        .map((a) => BigInt(a.x + a.y * MAP_WIDTH));
       setStatusMessage("Generating proof...");
 
       try {
         const proof = await getRevealProof(
-          positions,
+          points,
           army.commitment!,
           100n,
           BigInt(address!),
@@ -350,8 +352,9 @@ export const StarMap = () => {
       // Create a new army from the planet
       const planet = planets.find((p) => p.id === selectedPlanet);
       if (planet) {
+        const points = [{x:planet.x, y:planet.y}, ...pathPoints].map(p => ({ x: p.x/100, y: p.y/100 }));
         const commitment = getCommitment(
-          pathPoints,
+          points,
           SALT,
           BigInt(address!)
         );
