@@ -34,7 +34,7 @@ revealAddress=$(echo "$output" | grep "Deployed to:"  | awk -F ': ' '{print $2}'
 echo $revealAddress
 
 forge create Game.sol:Game \
-    --constructor-args $revealAddress \
+    --constructor-args $revealAddress 1 \
     --rpc-url $RPC_URL \
     --private-key $PRIVATE_KEY \
     --legacy
