@@ -24,6 +24,7 @@ export interface ArmyData {
   y: number;
   energy: number;
   commitment?: bigint;
+  startBlockNumber?: number;
   playerId: number;
   movingTo?: { x: number; y: number }[];
 }

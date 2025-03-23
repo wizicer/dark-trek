@@ -29,7 +29,7 @@ export const StarMap = () => {
   const [pathPoints, setPathPoints] = useState<PathPoint[]>([]);
   const [hoverPosition, setHoverPosition] = useState<PathPoint | null>(null);
   const [searchItems, setSearchItems] = useState<SearchItem[]>([]);
-  const [currentPlayerId] = useState<number>(1);
+  const [currentPlayerId, setCurrentPlayerId] = useState<number>(1);
   const [logs, setLogs] = useState<string[]>([]);
   const [showDebug] = useState(false);
   const [dimensions, setDimensions] = useState({
@@ -93,17 +93,29 @@ export const StarMap = () => {
     return () => window.removeEventListener("resize", handleResize);
   }, [addLog]);
 
-  useEffect(() => {
-    // Show first notification after 3 seconds
-    const firstTimer = setTimeout(() => {
-      const item = searchService.createSearchItem("A new army movement started");
-      setSearchItems((prev) => [...prev, item]);
-    }, 3000);
+  const getPlayerId = (address: string | null) => {
+    if (address == "0xDfbEE02da49CB97E75A8AaD35620FE602F38fb19")
+      return 1;
+    else if (address == "0x9CdD77E2D4C455b6a25dF1C91E0c1647B4D719f3")
+      return 2;
+    else return 0;
+  };
 
-    return () => {
-      clearTimeout(firstTimer);
-    };
-  }, []);
+  useEffect(() => {
+    setCurrentPlayerId(getPlayerId(address));
+  }, [address]);
+
+  // useEffect(() => {
+  //   // Show first notification after 3 seconds
+  //   const firstTimer = setTimeout(() => {
+  //     const item = searchService.createSearchItem("A new army movement started");
+  //     setSearchItems((prev) => [...prev, item]);
+  //   }, 3000);
+
+  //   return () => {
+  //     clearTimeout(firstTimer);
+  //   };
+  // }, []);
 
   useEffect(() => {
     searchService.setOnItemsChange(setSearchItems);
@@ -118,6 +130,7 @@ export const StarMap = () => {
     const fetchStatus = async () => {
       setStatusMessage("Reading status from contract...");
       try {
+        // update planets
         const maxPlanetId = await game.maxPlanetId();
         const updatedPlanets = [...planets];
         let hasChanges = false;
@@ -132,11 +145,66 @@ export const StarMap = () => {
               };
               hasChanges = true;
             }
+          } else {
+            const playerId = getPlayerId(planetOwner);
+            if (updatedPlanets[i-1].playerId !== playerId) {
+              updatedPlanets[i-1] = {
+                ...updatedPlanets[i-1],
+                playerId
+              };
+              hasChanges = true;
+            }
           }
         }
         
         if (hasChanges) {
           setPlanets(updatedPlanets);
+        }
+
+        // update army
+        const maxArmyId = await game.maxArmyId();
+        const storedArmies = JSON.parse(localStorage.getItem("armies") || "[]") as ArmyData[];
+        const updatedArmies: ArmyData[] = []; // from empty
+        
+        for (let i = 1; i <= maxArmyId; i++) {
+          const armyOwner = await game.armyOwner(i);
+          const armyEnergy = await game.armyEnergy(i);
+          const armyStartBlockNumber = await game.armyStartBlockNumber(i);
+          const armyCommitment = await game.armyCommitment(i);
+          const storedArmy = storedArmies.find((a) => a.id === i);
+
+          if (armyOwner === address) {
+            if (!storedArmy) {
+              console.warn("unknown my own army", i);
+            } else if (storedArmy.commitment !== armyCommitment) {
+              console.warn(
+                "my own army commitment changed",
+                storedArmy.commitment,
+                "!==",
+                armyCommitment
+              );
+            } else {
+              updatedArmies.push({
+                id: i,
+                energy: Number(armyEnergy),
+                startBlockNumber: Number(armyStartBlockNumber),
+                commitment: armyCommitment,
+                x: storedArmy.x,
+                y: storedArmy.y,
+                movingTo: storedArmy.movingTo,
+                playerId: currentPlayerId,
+              });
+            }
+          } else {
+            const item = searchService.createSearchItem(
+              "A new army movement started"
+            );
+            setSearchItems((prev) => [...prev, item]);
+          }
+        }
+        
+        if (hasChanges) {
+          setArmies(updatedArmies);
         }
       } catch (error) {
         console.warn("Error reading status from contract:", error);
@@ -145,7 +213,7 @@ export const StarMap = () => {
       setStatusMessage(null);
     };
     fetchStatus();
-  }, [game, address, currentPlayerId, planets, lastRetrieveInfoFromContract, isConnecting]);
+  }, [game, address, currentPlayerId, planets, armies, lastRetrieveInfoFromContract, isConnecting]);
 
   const handleSearchItemUpdate = useCallback((item: SearchItem) => {
     searchService.updateSearchItem(item);
@@ -303,6 +371,13 @@ export const StarMap = () => {
             movingTo: pathPoints,
             playerId: currentPlayerId,
           };
+
+          // Update local storage, newest army first
+          const storedArmies = JSON.parse(localStorage.getItem("armies") || "[]") as ArmyData[];
+          const uniqueArmies = Array
+            .from(new Set([...storedArmies, newArmy].map(a => a.id)))
+            .map(id => newArmy.id === id ? newArmy : storedArmies.find(a => a.id === id));
+          localStorage.setItem("armies", JSON.stringify(uniqueArmies));
 
           planet.energy -= newArmy.energy;
 
