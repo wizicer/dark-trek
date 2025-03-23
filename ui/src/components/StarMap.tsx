@@ -119,7 +119,7 @@ export const StarMap = () => {
 
   useEffect(() => {
     searchService.setOnItemsChange(setSearchItems);
-    searchService.startTimer(planets);
+    // searchService.startTimer(planets);
     return () => searchService.stopTimer();
   }, [planets]);
 

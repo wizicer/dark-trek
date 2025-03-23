@@ -67,7 +67,7 @@ export const SearchItemComponent = ({ item, isSelected, onSelect, onDismiss, onS
           }}
         />
         <Text
-          text={item.isSearching ? 'Stop' : `Search lvl.${item.searchLevel} (${item.countdown}s)`}
+          text={item.isSearching ? 'Stop' : `Search lvl.${item.searchLevel}`}
           anchor={0.5}
           position={[60, 10]}
           style={
