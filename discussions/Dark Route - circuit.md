@@ -16,11 +16,9 @@
 - position_hash：输出经过 duration 时间承诺者所在位置对应的哈希值。
 - energy (remaining) ：表示经过 duration 时间消耗的总 energy
 
-电路参数：
-
-下图表示是一个简单示例：
-
-![](./dark-route-circuit-route.svg)
+电路参数：x
+- `POINT_NUM`：positions[] 的长度
+- `MAP_WIDTH`:  地图的宽度
 
 **电路约束**
 1. 由 positions 计算的承诺与输入 commitment 一致
@@ -28,15 +26,12 @@
 3. 输出 position_hash 根据 duration 正确计算
 4. energy 是根据 duration/target_occupied 计算出来的
 
-### TODO
-- [ ] griffin permutation 算法，随机数 $\alpha, \beta$ 在每一轮取不同的值
-- [x] salt 和 pk 添加位置，进行拼接 ✅ 2025-03-22
-- [ ] bn254 和最后输出 commitment uint256 不匹配问题
-- 变成 253 或者 248 位
-- [ ] 开根号
-- [ ] NumTruncateBits 检查约束
-- [ ] position_hash 计算
 
+1. 电路证明中证明方法的选择，为了优化约束，调研了VDF中的 Sloth 方案，
+
+### TODO
+
+- [ ] 扩展实现 VDF slot 方案
 
 ### 约束 positions 和 commitment
 
@@ -49,6 +44,41 @@
 - `pk` ： 160 位
 - `salt` ：32 位
 拼接后的结果 `concatenate[i] = positions[i]||pk||salt` 为 256 位。
+
+#### 哈希计算
+
+在由 $a_i$ 计算哈希值 $H_j(a_i)$ 时，采用 VDF 中 Slot 方案来计算，而不是传统的哈希方法，例如 mimc 哈希。这样做的好处是：
+- 相比 mmic 哈希，大大减少了电路中的约束，使得证明能快速验证。
+- VDF 的方案引入，可以在电路外部防止玩家通过并行计算，reveal 出合法的路径。
+同时，通过 benchmark ，mmic 和 slot 中的开平方根运行一次的时间为：
+
+|                | mmic-7 | slot(square root) |
+| -------------- | ------ | ----------------- |
+| times($\mu s$) | 100    | 80                |
+
+两者差异并不大，slot 会比 mmic-7 运行快一些。
+
+- bn254
+```sagemath
+p = 21888242871839275222246405745257275088548364400416034343698204186575808495617
+p % 4
+```
+
+计算输出 1 ，那么 $p \equiv 1 \mod 4$ 。
+
+
+- bn128
+
+```sagemath
+p = 21888242871839275222246405745257275088696311157297823662689037894645226208583
+p % 4
+```
+
+得到 $p \equiv 3 \mod 4$
+
+```
+21888242871839275222246405745257275088696311157297823662689037894645226208583
+```
 
 ### 约束 positions
 
@@ -75,6 +105,10 @@ $$
 ![](./dark-route-circuit-position-hash2.svg)
 
 ### 输出 energy
+
+下图是输出 position_hash 和 energy 的示例。
+
+![](./dark-route-circuit-route.svg)
 
 ## 电路运行
 
@@ -157,7 +191,6 @@ snarkjs groth16 prove reveal_0000.zkey ./multiplier_js/witness.wtns ./proof/proo
 参考文档：
 - [构建你的第一个零知识 snark 电路（Circom2） — W3.Hitchhiker](https://w3hitchhiker.mirror.xyz/BHJ9fqXMABXspaFxbaDbt9c-PvrQLdi77OjN6Au9YqU)
 
-
 ## 技术选型
 
 ### Griffin
@@ -195,6 +228,10 @@ sloth 方案：验证比较快
 
 - Tonelli-Shanks 的 python 实现：[Tonelli-Shanks算法\_python-CSDN博客](https://blog.csdn.net/qq_51999772/article/details/122642868)
 - 计算二次剩余的算法描述：[二次剩余 - OI Wiki](https://oi-wiki.org/math/number-theory/quad-residue/)
+- circom 计算平方根：[FieldSqrt.circom](https://github.com/abdk-consulting/abdk-libraries-circom/blob/master/base/field/FieldSqrt.circom)
+
+- [circom/mkdocs/docs/getting-started/compilation-options.md at master · iden3/circom · GitHub](https://github.com/iden3/circom/blob/master/mkdocs/docs/getting-started/compilation-options.md)
+- [circom/mkdocs/docs/getting-started/compilation-options.md at master · iden3/circom · GitHub](https://github.com/iden3/circom/blob/master/mkdocs/docs/getting-started/compilation-options.md)
 
 ### Bloom filter
 
