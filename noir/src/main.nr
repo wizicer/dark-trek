@@ -1,8 +1,11 @@
+use std::{hash::poseidon::bn254, field};
+
 // use dep::std::convert::TryInto;
 // use dep::std::array;
 // use dep::mimc::mimc;
 // use dep::std::assert;
 
+#[field(bn254)]
 fn main(positions: [Field; 9], commitment: pub Field, duration: pub Field, pk: pub Field, salt: pub Field, target_occupied: pub Field, mimc_round: pub u32, map_width: pub u32) -> pub Output {
     let mut point_length: u64 = 0;
     // check the positions are correct
@@ -24,12 +27,12 @@ fn main(positions: [Field; 9], commitment: pub Field, duration: pub Field, pk: p
     // convert the positions to bits
     let mut positions_bits = [[0; 64]; 9];
     for i in 0..9 {
-        positions_bits[i] = num_to_bits(positions[i], 64);
+        positions_bits[i] =  positions[i].to_be_bits();
     }
 
     // convert the pk and salt to bits
-    let pk_bits = num_to_bits(pk, 160);
-    let salt_bits = num_to_bits(salt, 32);
+    let pk_bits:[u1; 160] = pk.to_be_bits();
+    let salt_bits:[u1; 32] = salt.to_be_bits();
 
     // concatenate the salt and pk into positions
     let mut positions_concat = [[0; 254]; 9];
@@ -48,6 +51,7 @@ fn main(positions: [Field; 9], commitment: pub Field, duration: pub Field, pk: p
     // convert the positions_concat to num
     let mut positions_num = [0; 9];
     for i in 0..9 {
+        // positions_num[i] = positions_concat[i].bits_to_num();
         positions_num[i] = bits_to_num(positions_concat[i]);
     }
 
