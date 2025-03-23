@@ -403,4 +403,4 @@ template Reveal(POINT_NUM, MAP_WIDTH, MIMC_ROUND) {
 
 }
 
-component main {public [commitment, duration, pk, salt, target_occupied]} = Reveal(3, 8, 2);
+component main {public [commitment, duration, pk, salt, target_occupied]} = Reveal(9, 20, 2);

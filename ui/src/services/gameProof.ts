@@ -1,4 +1,4 @@
-export const MAX_POINT_NUM = 20;
+export const MAX_POINT_NUM = 9;
 export const MAP_WIDTH = 20;
 export const MIMC_ROUND = 2;
 
@@ -31,7 +31,7 @@ export async function getRevealProof(
     .fill(0n)
     .map((_, i) => (i >= points.length ? 0n : points[i]));
 
-const debugObj = {
+  const debugObj = {
     positions,
     commitment,
     duration,
