@@ -88,7 +88,6 @@ function getPositionsNum(positions: bigint[], pk: bigint, salt: bigint): bigint[
     
     // Convert concatenated bits back to numbers
     const positionsNum = positionsConcat.map(bits => bitsToBigNum(bits));
-    console.log("positionsNum", positionsNum);
     
     return positionsNum;
 }
@@ -108,7 +107,6 @@ export function bloom_filter(bloom_filter: BloomFilterPathPoint): bigint {
 
     // Call griffinPermutation with the positions array length
     const griffin_output = griffinPermutation(positions_num, POINT_NUM);
-    console.log("griffin_output", griffin_output);
     
     // Create 2D arrays to store hashes and indices
     const mimc_hash: bigint[][] = Array(POINT_NUM).fill(0).map(() => Array(MIMC_ROUND).fill(0n));
@@ -155,7 +153,6 @@ export function bloom_filter(bloom_filter: BloomFilterPathPoint): bigint {
     }
 
     const commitment = bitsToBigNum(bit_array);
-    console.log("commitment", commitment);
 
     return  commitment;
 }

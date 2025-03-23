@@ -6,9 +6,6 @@ export function getCommitment(
   salt: bigint,
   pk: bigint
 ): bigint {
-  console.log("Points:", points);
-  console.log("Salt:", salt);
-  console.log("PK:", pk);
   const bf: BloomFilterPathPoint = {
     points: points,
     pk: pk,

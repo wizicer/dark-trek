@@ -9,7 +9,6 @@ function pow5(inp: bigint): bigint {
 }
 
 const P_bn128 = 21888242871839275222246405745257275088548364400416034343698204186575808495617n;
-const P128 = 21888242871839275222246405745257275088696311157297823662689037894645226208583n;
 
 // Finite field multiplication
 function fieldMulMod(a: bigint, b: bigint, p: bigint = P_bn128): bigint {
@@ -60,25 +59,17 @@ function powInv5(inp: bigint): bigint {
   const d_inv = 0x26b6a528b427b35493736af8679aad17535cb9d394945a0dcfe7f7a98ccccccdn;
 
   // Using modular exponentiation for large numbers
-  console.log("x", inp);
-
   const inp_mod = ensureInField(inp);
   // inp ** d_inv;
   const result = fieldPow(inp_mod, d_inv);
-  console.log("result", result);
 
   // Verify the result
   const check = pow5(result);
-  console.log("check", check);
-
-  console.log("check_mod_p128", check % P128);
 
   if (check !== inp_mod) {
     throw new Error("Invalid powInv5 result");
   }
   
-
-  console.log("ok!");
   return result;
 
 }
@@ -151,8 +142,6 @@ function addRC(inp: bigint[], round: number): bigint[] {
 
 // Linear layer functions
 function linearLayer(inp: bigint[]): bigint[] {
-//   console.log("inp", inp);
-
   for(let i = 0; i < inp.length; i++) {
     if (inp[i] == undefined) {
       inp[i] = 0n; 
