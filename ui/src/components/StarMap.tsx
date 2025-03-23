@@ -16,6 +16,7 @@ import { useWallet } from "../hooks/useWallet.ts";
 import { GameAbi__factory } from "../contracts/index.ts";
 import { getRevealProof } from "../services/gameProof.ts";
 import { getCommitment } from "../services/positionCommitment.ts";
+import { StatusOverlay } from "./StatusOverlay";
 
 const GAME_MAP_WIDTH = 20;
 const SALT = 1n;
@@ -35,11 +36,13 @@ export const StarMap = () => {
     width: window.innerWidth,
     height: window.innerHeight,
   });
-  const { signer, address } = useWallet();
+  const { signer, address, isConnecting } = useWallet();
   const contract = "0x698170B76f32eAB533352Ec5eAC670a116F43A77";
   const game = GameAbi__factory.connect(contract, signer!);
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const [lastRetrieveInfoFromContract, setLastRetrieveInfoFromContract] = useState<number>(0);
 
-  const [planets] = useState<PlanetData[]>([
+  const [planets, setPlanets] = useState<PlanetData[]>([
     { id: 1, x: 200, y: 200, radius: 30, playerId: 0, energy: 400 },
     { id: 2, x: 400, y: 300, radius: 40, playerId: 0, energy: 400 },
     { id: 3, x: 600, y: 200, radius: 35, playerId: 0, energy: 400 },
@@ -108,6 +111,42 @@ export const StarMap = () => {
     return () => searchService.stopTimer();
   }, [planets]);
 
+  useEffect(() => {
+    if (!address || !game || !currentPlayerId || isConnecting) return;
+    if (Date.now() - lastRetrieveInfoFromContract < 10000) return;
+    setLastRetrieveInfoFromContract(Date.now());
+    const fetchStatus = async () => {
+      setStatusMessage("Reading status from contract...");
+      try {
+        const maxPlanetId = await game.maxPlanetId();
+        const updatedPlanets = [...planets];
+        let hasChanges = false;
+        
+        for (let i = 1; i <= maxPlanetId && i < updatedPlanets.length; i++) {
+          const planetOwner = await game.planetOwner(i);
+          if (planetOwner === address) {
+            if (updatedPlanets[i-1].playerId !== currentPlayerId) {
+              updatedPlanets[i-1] = {
+                ...updatedPlanets[i-1],
+                playerId: currentPlayerId
+              };
+              hasChanges = true;
+            }
+          }
+        }
+        
+        if (hasChanges) {
+          setPlanets(updatedPlanets);
+        }
+      } catch (error) {
+        console.warn("Error reading status from contract:", error);
+        setLastRetrieveInfoFromContract(0);
+      }
+      setStatusMessage(null);
+    };
+    fetchStatus();
+  }, [game, address, currentPlayerId, planets, lastRetrieveInfoFromContract, isConnecting]);
+
   const handleSearchItemUpdate = useCallback((item: SearchItem) => {
     searchService.updateSearchItem(item);
   }, []);
@@ -149,17 +188,26 @@ export const StarMap = () => {
       const army = armies.find((a) => a.id === id);
       if (!army) return;
       const positions = army.movingTo?.map((a) => BigInt(a.x + a.y * GAME_MAP_WIDTH)) || [];
-      const proof = await getRevealProof(
-        positions,
-        army.commitment!,
-        100n,
-        BigInt(address!),
-        SALT,
-        1n,
-      );
-      console.log(proof);
+      setStatusMessage("Generating proof...");
+
+      try {
+        const proof = await getRevealProof(
+          positions,
+          army.commitment!,
+          100n,
+          BigInt(address!),
+          SALT,
+          1n,
+        );
+        console.log(proof);
+        addLog(`Generated proof for army ${id}`);
+      } catch (error) {
+        console.error("Error generating proof:", error);
+        addLog(`Failed to generate proof for army ${id}`);
+      }
+      setStatusMessage(null);
     },
-    [address, armies]
+    [address, armies, addLog]
   );
 
   const handleStagePointerMove = useCallback(
@@ -241,23 +289,31 @@ export const StarMap = () => {
           BigInt(address!)
         );
         console.log("Commitment", commitment);
-        const commitResp = await game.commit(planet.id, commitment, planet.energy)
+        
+        setStatusMessage("Submitting commitment to blockchain...");
+        try {
+          const commitResp = await game.commit(planet.id - 1, commitment, planet.energy);
+          
+          const newArmy : ArmyData = {
+            id: Number(commitResp.value),
+            x: planet.x,
+            y: planet.y,
+            energy: planet.energy,
+            commitment,
+            movingTo: pathPoints,
+            playerId: currentPlayerId,
+          };
 
-        const newArmy : ArmyData = {
-          id: Number(commitResp.value),
-          x: planet.x,
-          y: planet.y,
-          energy: planet.energy,
-          commitment,
-          movingTo: pathPoints,
-          playerId: currentPlayerId,
-        };
+          planet.energy -= newArmy.energy;
 
-        planet.energy -= newArmy.energy;
-
-
-        setArmies((prev) => [...prev, newArmy]);
-        addLog(`Created new army ${newArmy.id} from planet ${selectedPlanet}`);
+          setArmies((prev) => [...prev, newArmy]);
+          addLog(`Created new army ${newArmy.id} from planet ${selectedPlanet}`);
+        } catch (error) {
+          console.error("Error committing:", error);
+          addLog(`Failed to create army: ${error}`);
+        } finally {
+          setStatusMessage(null);
+        }
       }
     }
 
@@ -292,10 +348,19 @@ export const StarMap = () => {
     if (!planet) return;
 
     console.log("Occupying planet", planetId)
-    await game.initPlayer();
-    planet.energy = 400;
-    planet.playerId = currentPlayerId;
-  }, [game, planets, currentPlayerId]);
+    setStatusMessage("Initializing player...");
+    try {
+      await game.initPlayer();
+      planet.energy = 400;
+      planet.playerId = currentPlayerId;
+      addLog(`Occupied planet ${planetId}`);
+    } catch (error) {
+      console.error("Error occupying planet:", error);
+      addLog(`Failed to occupy planet: ${error}`);
+    } finally {
+      setStatusMessage(null);
+    }
+  }, [game, planets, currentPlayerId, addLog]);
 
   const handleSearchItemSelect = useCallback((id: number) => {
     setSelectedSearchId((prev) => (prev === id ? null : id));
@@ -447,6 +512,7 @@ export const StarMap = () => {
           ))}
         </div>
       )}
+      {statusMessage && <StatusOverlay message={statusMessage} />}
     </div>
   );
 };
