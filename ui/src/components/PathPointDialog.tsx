@@ -14,7 +14,7 @@ export const PathPointDialog = ({ onSetTarget, onUndo }: PathPointDialogProps) =
   };
 
   return (
-    <Container position={[10, 10]} eventMode="static">
+    <Container position={[window.innerWidth / 2 - 150, 10]} eventMode="static">
       <Graphics
         draw={g => {
           g.clear();
