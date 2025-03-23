@@ -212,7 +212,7 @@ export const StarMap = () => {
           }
         }
         
-        if (hasChanges) {
+        if (updatedArmies.length > 0) {
           setArmies(updatedArmies);
         }
 
