@@ -5,6 +5,7 @@
     "dev:chain": "cd contracts && npm run chain",
     "build:circuits": "cd circuits && npm run build",
     "build:contracts": "cd contracts && npm run build",
+    "build:ui": "cd ui && npm run build",
     "build": "npm run build:circuits && npm run build:contracts"
   }
 }

@@ -34,3 +34,4 @@ ui/public/circuits/
 contracts/revealVerifier.sol
 ui/src/contracts/
 contracts/.states/
+ui/public/snarkjs.min.js

@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "npm run build:snarkjs && tsc -b && vite build",
+    "build:snarkjs": "cp ../node_modules/snarkjs/build/snarkjs.min.js public/",
     "lint": "eslint .",
     "preview": "vite preview"
   },
