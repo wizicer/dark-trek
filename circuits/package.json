@@ -4,7 +4,7 @@
   "scripts": {
     "build:reveal": "bash ./scripts/compile.sh reveal && bash ./scripts/cpcircuit.sh reveal",
     "build:circuits": "npm run build:reveal",
-    "setup:ptau": "wget -O pot_final.ptau https://hermez.s3-eu-west-1.amazonaws.com/powersOfTau28_hez_final_15.ptau",
+    "setup:ptau": "wget -O pot_final.ptau https://hermez.s3-eu-west-1.amazonaws.com/powersOfTau28_hez_final_19.ptau",
     "build": "npm run build:circuits"
   },
   "devDependencies": {
