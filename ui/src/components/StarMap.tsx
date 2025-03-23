@@ -36,7 +36,7 @@ export const StarMap = () => {
     height: window.innerHeight,
   });
   const { signer, address, isConnecting } = useWallet();
-  const contract = "0x698170B76f32eAB533352Ec5eAC670a116F43A77";
+  const contract = "0x4F6087C73f8dC8D1F7fbca7e5C7fBE8953A6589E";
   const game = GameAbi__factory.connect(contract, signer!);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [lastRetrieveInfoFromContract, setLastRetrieveInfoFromContract] = useState<number>(0);
@@ -66,9 +66,9 @@ export const StarMap = () => {
   })));
 
   const [armies, setArmies] = useState<ArmyData[]>([
-    { id: 1, x: 300, y: 300, energy: 100, playerId: 1 },
-    { id: 2, x: 500, y: 400, energy: 80, playerId: 2 },
-    { id: 3, x: 700, y: 300, energy: 120, playerId: 0 },
+    // { id: 1, x: 300, y: 300, energy: 100, playerId: 1 },
+    // { id: 2, x: 500, y: 400, energy: 80, playerId: 2 },
+    // { id: 3, x: 700, y: 300, energy: 120, playerId: 0 },
   ]);
 
   const addLog = useCallback((message: string) => {
@@ -175,7 +175,7 @@ export const StarMap = () => {
           if (armyOwner === address) {
             if (!storedArmy) {
               console.warn("unknown my own army", i);
-            } else if (storedArmy.commitment !== armyCommitment) {
+            } else if (BigInt(storedArmy.commitment ?? 0) !== armyCommitment) {
               console.warn(
                 "my own army commitment changed",
                 storedArmy.commitment,
@@ -362,13 +362,13 @@ export const StarMap = () => {
         
         setStatusMessage("Submitting commitment to blockchain...");
         try {
-          const commitResp = await game.commit(planet.id - 1, commitment, planet.energy);
-          
+          const maxArmyId = await game.maxArmyId();
+          await game.commit(planet.id, commitment, 100);
           const newArmy : ArmyData = {
-            id: Number(commitResp.value),
+            id: Number(maxArmyId + 1n),
             x: planet.x,
             y: planet.y,
-            energy: planet.energy,
+            energy: 100,
             commitment,
             movingTo: pathPoints,
             playerId: currentPlayerId,
@@ -379,6 +379,7 @@ export const StarMap = () => {
           const uniqueArmies = Array
             .from(new Set([...storedArmies, newArmy].map(a => a.id)))
             .map(id => newArmy.id === id ? newArmy : storedArmies.find(a => a.id === id));
+          console.log("uniqueArmies", uniqueArmies);
           localStorage.setItem("armies", JSON.stringify(uniqueArmies));
 
           planet.energy -= newArmy.energy;
