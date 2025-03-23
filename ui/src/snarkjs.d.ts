@@ -7,7 +7,11 @@ interface Window {
         wasmPath: string,
         zkeyPath: string
       ) => Promise<{ proof: any; publicSignals: any }>;
+
+      exportSolidityCallData: (
+        proof: any,
+        publicSignals: any
+      ) => Promise<string>;
     };
-    exportSolidityCallData: (proof: any, publicSignals: any) => Promise<string>;
   };
 }

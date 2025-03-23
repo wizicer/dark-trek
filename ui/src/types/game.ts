@@ -3,6 +3,7 @@ export interface PlanetData {
   x: number;
   y: number;
   radius: number;
+  energy: number;
   playerId?: number;
   satellites: {
     size: number;
@@ -22,6 +23,7 @@ export interface ArmyData {
   x: number;
   y: number;
   energy: number;
+  commitment?: bigint;
   playerId: number;
   movingTo?: { x: number; y: number }[];
 }

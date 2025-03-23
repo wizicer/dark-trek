@@ -12,6 +12,13 @@ import { SearchItem } from "../types/search";
 import { searchService } from "../services/searchService";
 import { PlanetData, PathPoint, ArmyData } from "../types/game";
 import { ConnectButton } from "./ConnectButton";
+import { useWallet } from "../hooks/useWallet.ts";
+import { GameAbi__factory } from "../contracts/index.ts";
+import { getRevealProof } from "../services/gameProof.ts";
+import { getCommitment } from "../services/positionCommitment.ts";
+
+const GAME_MAP_WIDTH = 20;
+const SALT = 1n;
 
 export const StarMap = () => {
   const [selectedPlanet, setSelectedPlanet] = useState<number | null>(null);
@@ -28,13 +35,16 @@ export const StarMap = () => {
     width: window.innerWidth,
     height: window.innerHeight,
   });
+  const { signer, address } = useWallet();
+  const contract = "0x698170B76f32eAB533352Ec5eAC670a116F43A77";
+  const game = GameAbi__factory.connect(contract, signer!);
 
   const [planets] = useState<PlanetData[]>([
-    { id: 1, x: 200, y: 200, radius: 30, playerId: 1 },
-    { id: 2, x: 400, y: 300, radius: 40, playerId: 2 },
-    { id: 3, x: 600, y: 200, radius: 35, playerId: 0 },
-    { id: 4, x: 800, y: 400, radius: 45, playerId: 0 },
-    { id: 5, x: 300, y: 500, radius: 25, playerId: 0 },
+    { id: 1, x: 200, y: 200, radius: 30, playerId: 1, energy: 400 },
+    { id: 2, x: 400, y: 300, radius: 40, playerId: 2, energy: 400 },
+    { id: 3, x: 600, y: 200, radius: 35, playerId: 0, energy: 400 },
+    { id: 4, x: 800, y: 400, radius: 45, playerId: 0, energy: 400 },
+    { id: 5, x: 300, y: 500, radius: 25, playerId: 0, energy: 400 },
   ].map((planet) => ({
     ...planet,
     satellites: [
@@ -134,6 +144,24 @@ export const StarMap = () => {
     [selectingDestination]
   );
 
+  const handleReveal = useCallback(
+    async (id: number) => {
+      const army = armies.find((a) => a.id === id);
+      if (!army) return;
+      const positions = army.movingTo?.map((a) => BigInt(a.x + a.y * GAME_MAP_WIDTH)) || [];
+      const proof = await getRevealProof(
+        positions,
+        army.commitment!,
+        100n,
+        BigInt(address!),
+        SALT,
+        1n,
+      );
+      console.log(proof);
+    },
+    [address, armies]
+  );
+
   const handleStagePointerMove = useCallback(
     (e: React.PointerEvent<HTMLCanvasElement>) => {
       if (!selectingDestination) return;
@@ -181,7 +209,7 @@ export const StarMap = () => {
     addLog,
   ]);
 
-  const handleSetTarget = useCallback(() => {
+  const handleSetTarget = useCallback(async () => {
     if (pathPoints.length === 0) return;
 
     addLog("Target set with " + pathPoints.length + " points");
@@ -207,14 +235,26 @@ export const StarMap = () => {
       // Create a new army from the planet
       const planet = planets.find((p) => p.id === selectedPlanet);
       if (planet) {
+        const commitment = getCommitment(
+          pathPoints.map(p => BigInt(p.x + p.y * GAME_MAP_WIDTH)),
+          SALT,
+          BigInt(address!)
+        );
+        const commitResp = await game.commit(planet.id, commitment, planet.energy)
+
         const newArmy : ArmyData = {
-          id: armies.length + 1,
+          id: Number(commitResp.value),
           x: planet.x,
           y: planet.y,
-          energy: 100,
+          energy: planet.energy,
+          commitment,
           movingTo: pathPoints,
           playerId: currentPlayerId,
         };
+
+        planet.energy -= newArmy.energy;
+
+
         setArmies((prev) => [...prev, newArmy]);
         addLog(`Created new army ${newArmy.id} from planet ${selectedPlanet}`);
       }
@@ -234,6 +274,8 @@ export const StarMap = () => {
     planets,
     setArmies,
     currentPlayerId,
+    game,
+    address,
   ]);
 
   const handleUndo = useCallback(() => {
@@ -323,7 +365,7 @@ export const StarMap = () => {
                   onSelect={() => handleArmyClick(army.id)}
                   playerId={army.playerId}
                   currentPlayerId={currentPlayerId}
-                  onReveal={() => addLog(`Reveal army ${army.id}`)}
+                  onReveal={() => handleReveal(army.id)}
                 />
               ) : (
                 <Army

@@ -69,7 +69,7 @@ contract Game is IGame {
             duration,
             uint(uint160(owner)),
             uint(salt),
-            uint(0),
+            uint(1),
             positionHash,
             energy
         ];
