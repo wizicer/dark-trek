@@ -40,8 +40,8 @@ export const StarMap = () => {
   const game = GameAbi__factory.connect(contract, signer!);
 
   const [planets] = useState<PlanetData[]>([
-    { id: 1, x: 200, y: 200, radius: 30, playerId: 1, energy: 400 },
-    { id: 2, x: 400, y: 300, radius: 40, playerId: 2, energy: 400 },
+    { id: 1, x: 200, y: 200, radius: 30, playerId: 0, energy: 400 },
+    { id: 2, x: 400, y: 300, radius: 40, playerId: 0, energy: 400 },
     { id: 3, x: 600, y: 200, radius: 35, playerId: 0, energy: 400 },
     { id: 4, x: 800, y: 400, radius: 45, playerId: 0, energy: 400 },
     { id: 5, x: 300, y: 500, radius: 25, playerId: 0, energy: 400 },
@@ -240,6 +240,7 @@ export const StarMap = () => {
           SALT,
           BigInt(address!)
         );
+        console.log("Commitment", commitment);
         const commitResp = await game.commit(planet.id, commitment, planet.energy)
 
         const newArmy : ArmyData = {
@@ -285,6 +286,16 @@ export const StarMap = () => {
     });
     addLog("Undid last path point");
   }, [addLog]);
+
+  const handleOccupy = useCallback(async (planetId: number) => {
+    const planet = planets.find((p) => p.id === planetId);
+    if (!planet) return;
+
+    console.log("Occupying planet", planetId)
+    await game.initPlayer();
+    planet.energy = 400;
+    planet.playerId = currentPlayerId;
+  }, [game, planets, currentPlayerId]);
 
   const handleSearchItemSelect = useCallback((id: number) => {
     setSelectedSearchId((prev) => (prev === id ? null : id));
@@ -403,6 +414,7 @@ export const StarMap = () => {
               planet={planets.find((p) => p.id === selectedPlanet)!}
               onClose={() => setSelectedPlanet(null)}
               onSendArmy={() => setSelectingDestination(true)}
+              onOccupy={() => handleOccupy(selectedPlanet!)}
               currentPlayerId={currentPlayerId}
             />
           )}

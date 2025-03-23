@@ -11,11 +11,13 @@ interface PlanetDialogProps {
   };
   onClose: () => void;
   onSendArmy: () => void;
+  onOccupy: () => void;
   currentPlayerId: number;
 }
 
-export const PlanetDialog = ({ planet, onClose, onSendArmy, currentPlayerId }: PlanetDialogProps) => {
+export const PlanetDialog = ({ planet, onClose, onSendArmy, onOccupy, currentPlayerId }: PlanetDialogProps) => {
   const canSendArmy = planet.playerId === currentPlayerId;
+  const canOccupy = planet.playerId === 0;
 
   return (
     <Container position={[planet.x + 150, planet.y]}>
@@ -116,6 +118,34 @@ export const PlanetDialog = ({ planet, onClose, onSendArmy, currentPlayerId }: P
           />
           <Text
             text="Send Army"
+            anchor={0.5}
+            position={[40, 15]}
+            style={
+              new TextStyle({
+                fill: 0xffffff,
+                fontSize: 14
+              })
+            }
+          />
+        </Container>
+      )}
+      {canOccupy && (
+        <Container
+          eventMode="dynamic"
+          onclick={onOccupy}
+          cursor="pointer"
+          position={[10, 40]}
+        >
+          <Graphics
+            draw={g => {
+              g.clear();
+              g.beginFill(0x22c55e);
+              g.drawRoundedRect(0, 0, 80, 30, 5);
+              g.endFill();
+            }}
+          />
+          <Text
+            text="Occupy"
             anchor={0.5}
             position={[40, 15]}
             style={
