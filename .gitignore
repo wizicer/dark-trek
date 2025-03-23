@@ -33,3 +33,4 @@ contracts/artifacts/
 ui/public/circuits/
 contracts/revealVerifier.sol
 ui/src/contracts/
+contracts/.states/
