@@ -7,11 +7,10 @@ template GriffinPermutation(N) {
     signal output out[N];
 
     signal aux[N + 2];
-    for (var i = 0; i < N - 2; i+=3) {
+    for (var i = 0; i < N; i++) {
         aux[i] <== inp[i];
-        aux[i+1] <== inp[i+1];
-        aux[i+2] <== inp[i+2];
     }
+
     aux[N] <== 0;
     aux[N+1] <== 0;
 
@@ -31,3 +30,5 @@ template GriffinPermutation(N) {
         out[i] <== aux_output[i];
     }
 }
+
+// component main = GriffinPermutation(23);

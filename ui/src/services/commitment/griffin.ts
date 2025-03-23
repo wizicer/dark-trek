@@ -6,12 +6,9 @@ import { permutation } from './griffin_perm';
 function griffinPermutation(inp: bigint[], N: number): bigint[] {
     // Initialize auxiliary arrays
     const aux: bigint[] = new Array(N + 2);
-    
-    // Copy input values to aux array
-    for (let i = 0; i < N - 2; i += 3) {
+
+    for (let i = 0; i < N; i++) {
         aux[i] = inp[i];
-        aux[i + 1] = inp[i + 1]; 
-        aux[i + 2] = inp[i + 2];
     }
     aux[N] = 0n;
     aux[N + 1] = 0n;

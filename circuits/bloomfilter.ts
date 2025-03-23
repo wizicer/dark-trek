@@ -2,6 +2,7 @@
 import { griffinPermutation } from './griffin';
 import { Mimc7 } from "scrypt-ts-lib";
 
+
 // copy from ui/src/components/PathEditor.tsx
 interface MyPoint {
     x: number;

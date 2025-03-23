@@ -23,12 +23,16 @@ template PowInv5() {
   signal output out;
 
   var d_inv = 0x26b6a528b427b35493736af8679aad17535cb9d394945a0dcfe7f7a98ccccccd;
+  // log("d_inv", d_inv);
+
+  // signal p <== 21888242871839275222246405745257275088548364400416034343698204186575808495617;
+  // log("p", p);
   out <-- (inp ** d_inv);
 
   // log("x = input   = ",inp);
   // log("y = x^d_inv = ",out);
   // log("z = y^5     = ",out ** 5);
-
+  
   component pow5 = Pow5();
   pow5.inp <== out;
   pow5.out === inp;          // note: x -> x^5 is a permutation, so this is enough

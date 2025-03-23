@@ -12,6 +12,7 @@ include "./utils/utils.circom";
 template Reveal(POINT_NUM, MAP_WIDTH, MIMC_ROUND) {
     // private input
     signal input positions[POINT_NUM];
+    // signal input point_length; // valid point length
 
     // public input
     signal input commitment;
@@ -22,6 +23,43 @@ template Reveal(POINT_NUM, MAP_WIDTH, MIMC_ROUND) {
 
     signal output position_hash;
     signal output energy;
+
+    // generate the positions selector
+    signal positions_mask[POINT_NUM];
+    signal positions_mask_temp[POINT_NUM];
+    for (var i = 0; i < POINT_NUM; i++){
+        positions_mask_temp[i] <== IsZero()(positions[i]);
+        positions_mask[i] <== 1 - positions_mask_temp[i];
+    }
+
+    // verfiy positions_mask is valid
+    signal accumPositionsMaskZero[POINT_NUM];
+    accumPositionsMaskZero[0] <== 0;
+    positions_mask[0] === 1; // constraint the first element is 1
+    for (var i = 1; i < POINT_NUM; i++) {
+        // // constraint every element is zero or one
+        // positions_mask[i] * (1 - positions_mask[i]) === 0;
+
+        // avoid [... 0 1 ...]
+        accumPositionsMaskZero[i] <== accumPositionsMaskZero[i - 1] + (1 - positions_mask[i - 1]) * positions_mask[i];
+    }
+    accumPositionsMaskZero[POINT_NUM - 1] === 0;
+
+    // verifiy the point_length is valid
+    signal accum_point_length[POINT_NUM + 1];
+    accum_point_length[0] <== 0;
+    for (var i = 0; i < POINT_NUM; i++){
+        accum_point_length[i + 1] <== accum_point_length[i] + positions_mask[i];
+    }
+    var point_length = accum_point_length[POINT_NUM];
+    // accum_point_length[POINT_NUM] === point_length;
+
+
+    // // get valid positions
+    // signal valid_positions[POINT_NUM];
+    // for (var i = 0; i < POINT_NUM; i++){
+    //     valid_positions[i] <== positions[i];
+    // }
 
     // ------------------------------------------------------------------------------
     // 1. verify that the commitment is valid and corresponds to the positions
@@ -79,6 +117,10 @@ template Reveal(POINT_NUM, MAP_WIDTH, MIMC_ROUND) {
     signal position_griffin[POINT_NUM];
     griffin_perm.inp <== positions_num;
     griffin_perm.out ==> position_griffin;
+
+    // for (var i = 0; i < POINT_NUM; i++){
+    //     log("position_griffin[i]", position_griffin[i]);
+    // }
 
     // // ------------------------------------------------------------------------------
     // // test slot hash
@@ -216,12 +258,20 @@ template Reveal(POINT_NUM, MAP_WIDTH, MIMC_ROUND) {
     signal bit_array_temp[256][MIMC_ROUND + 1];
     signal bit_array_is_zero[256];
 
+    signal bits_to_index_zero[256][MIMC_ROUND][POINT_NUM];
+
+    // signal bits_to_index_mask_left[MIMC_ROUND][POINT_NUM];
+    // signal bits_to_index_mask_right[MIMC_ROUND][POINT_NUM];
+
     for (var i = 0; i < 256; i++) {
         bit_array_temp[i][0] <== 0;
         for (var round = 0; round < MIMC_ROUND; round++) {
             acc_bits_to_index[i][round][0] <== 0;
             for (var j = 0; j < POINT_NUM; j++) {
-                acc_bits_to_index_temp[i][round][j] <== IsZero()(i - bits_to_index[round][j]);
+                bits_to_index_zero[i][round][j] <== IsZero()(i - bits_to_index[round][j]);
+                acc_bits_to_index_temp[i][round][j] <== positions_mask[j] * bits_to_index_zero[i][round][j];
+
+                // acc_bits_to_index_temp[i][round][j] <== IsZero()(i - bits_to_index[round][j]);
                 acc_bits_to_index[i][round][j + 1] <== acc_bits_to_index[i][round][j] + acc_bits_to_index_temp[i][round][j];
             }
             bit_array_temp[i][round + 1] <== bit_array_temp[i][round] + acc_bits_to_index[i][round][POINT_NUM];
@@ -247,25 +297,46 @@ template Reveal(POINT_NUM, MAP_WIDTH, MIMC_ROUND) {
     //------------------------------------------------------------------------------
     // 2. verify the position is valid
     //------------------------------------------------------------------------------
-    signal accum_sum_path[POINT_NUM - 1][5];
-    signal accum_sum_path_temp[POINT_NUM - 1][4];
+    signal accum_sum_path[POINT_NUM][5];
+    // signal accum_sum_path_temp_temp[POINT_NUM - 1][4];
+    signal accum_sum_path_temp[POINT_NUM][4];
+    signal temp[POINT_NUM];
+    signal temp_temp[POINT_NUM];
+
+    signal length_temp[POINT_NUM];
+    for (var i = 0; i < POINT_NUM; i++){
+        length_temp[i] <== IsZero()(point_length - i - 1);
+    }
 
     for (var i = 0; i < POINT_NUM - 1; i++){
         accum_sum_path[i][0] <== 0;
-        
+
+        // temp[i] <== IsZero()(point_length - i - 1);
+
+        // accum_sum_path_temp_temp[i][0] <== IsZero()(positions[i] - positions[i + 1] + 1);
         accum_sum_path_temp[i][0] <== IsZero()(positions[i] - positions[i + 1] + 1);
         accum_sum_path[i][1] <== accum_sum_path[i][0] + accum_sum_path_temp[i][0];
 
+        // accum_sum_path_temp_temp[i][1] <== IsZero()(positions[i] - positions[i + 1] - 1);
         accum_sum_path_temp[i][1] <== IsZero()(positions[i] - positions[i + 1] - 1);
         accum_sum_path[i][2] <== accum_sum_path[i][1] + accum_sum_path_temp[i][1];
 
+        // accum_sum_path_temp_temp[i][2] <== IsZero()(positions[i] - positions[i + 1] - MAP_WIDTH);
         accum_sum_path_temp[i][2] <== IsZero()(positions[i] - positions[i + 1] - MAP_WIDTH);
         accum_sum_path[i][3] <== accum_sum_path[i][2] + accum_sum_path_temp[i][2];
 
+        // accum_sum_path_temp_temp[i][3] <== IsZero()(positions[i] - positions[i + 1] + MAP_WIDTH);
         accum_sum_path_temp[i][3] <== IsZero()(positions[i] - positions[i + 1] + MAP_WIDTH);
         accum_sum_path[i][4] <== accum_sum_path[i][3] + accum_sum_path_temp[i][3];
 
-        accum_sum_path[i][4] === 1;
+        // log("i:", i);
+        // log("length_temp[i]", length_temp[i]);
+        temp_temp[i] <== (1 - length_temp[i]) * positions_mask[i];
+        // log("temp_temp[i]", temp_temp[i]);
+        // log("accum_sum_path[i][4]", accum_sum_path[i][4]);
+        // log("positions_mask[i]", positions_mask[i]);
+        accum_sum_path[i][4] === temp_temp[i];
+        // positions_mask[i] * accum_sum_path[i][4] + 1 - positions_mask[i] === 1;
     }
 
     //------------------------------------------------------------------------------
@@ -278,7 +349,7 @@ template Reveal(POINT_NUM, MAP_WIDTH, MIMC_ROUND) {
     component gt = GreaterEqThan(8);
     gt.in[0] <== duration;
     // path_length = POINT_NUM - 1
-    gt.in[1] <== POINT_NUM - 1;
+    gt.in[1] <== point_length - 1;
     gt.out ==> duration_flag;
 
     // if duration < POINT_NUM - 1 : hash_duration = position_griffin[duration]
@@ -290,13 +361,20 @@ template Reveal(POINT_NUM, MAP_WIDTH, MIMC_ROUND) {
         hash_duration[i + 1] <== hash_duration[i] + index_flag[i] * position_griffin[i];
         // log("position_griffin[i]", position_griffin[i]);
     }
+    signal hash_duration_temp <== hash_duration[POINT_NUM];
 
     // if duration < POINT_NUM - 1: position_hash =  position_griffin[duration]
     // if duration >= POINT_NUM - 1: position_hash =  position_griffin[POINT_NUM - 1]
-    signal position_hash_left <== duration_flag * position_griffin[POINT_NUM - 1];  
-    signal position_hash_right <== (1 - duration_flag) * hash_duration[POINT_NUM];
+    signal position_griffin_temp[POINT_NUM + 1];
+    position_griffin_temp[0] <== 0;
+    for (var i = 0; i < POINT_NUM; i++){
+        position_griffin_temp[i + 1] <== position_griffin_temp[i] + length_temp[i] * position_griffin[i];
+    }
+
+    signal position_hash_left <== duration_flag * position_griffin_temp[POINT_NUM];  
+    signal position_hash_right <== (1 - duration_flag) * hash_duration_temp;
     position_hash <== position_hash_left + position_hash_right;
-    // log("position_hash", position_hash);
+    log("position_hash", position_hash);
 
     //------------------------------------------------------------------------------
     // 4. output the correct energy
@@ -304,11 +382,11 @@ template Reveal(POINT_NUM, MAP_WIDTH, MIMC_ROUND) {
 
     // target_occupied should be a bit
     (1 - target_occupied) * target_occupied === 0;
-    signal occupied_energy <== (1 - target_occupied) * (duration - POINT_NUM + 1);
+    signal occupied_energy <== (1 - target_occupied) * (duration - point_length + 1);
     // log("occupied_energy", occupied_energy);
 
     signal ten_duration <== 10 * duration;
-    signal ten_path_length <== 10 * (POINT_NUM - 1);
+    signal ten_path_length <== 10 * (point_length - 1);
 
     // path_length = POINT_NUM - 1
     // duration < path_length
@@ -322,4 +400,4 @@ template Reveal(POINT_NUM, MAP_WIDTH, MIMC_ROUND) {
 
 }
 
-component main {public [commitment, duration, pk, salt, target_occupied]} = Reveal(3, 4, 2);
+component main {public [commitment, duration, pk, salt, target_occupied]} = Reveal(3, 8, 2);
