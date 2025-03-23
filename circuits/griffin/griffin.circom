@@ -13,7 +13,7 @@ template GriffinPermutation(N) {
 
     aux[N] <== 0;
     aux[N+1] <== 0;
-
+    
     component perm[N + 2];
     signal aux_output[N + 2];
     for (var i = 0; i < N; i += 3) {

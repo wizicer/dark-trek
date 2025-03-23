@@ -82,25 +82,25 @@ function powInv5(inp: bigint): bigint {
   const d_inv = 0x26b6a528b427b35493736af8679aad17535cb9d394945a0dcfe7f7a98ccccccdn;
 
   // Using modular exponentiation for large numbers
-  console.log("x", inp);
+//   console.log("x", inp);
 
   const inp_mod = ensureInField(inp);
   // inp ** d_inv;
   let result = fieldPow(inp_mod, d_inv);
-  console.log("result", result);
+//   console.log("result", result);
 
   // Verify the result
   const check = pow5(result);
-  console.log("check", check);
+//   console.log("check", check);
 
-  console.log("check_mod_p128", check % P128);
+//   console.log("check_mod_p128", check % P128);
 
   if (check !== inp_mod) {
     throw new Error("Invalid powInv5 result");
   }
   
 
-  console.log("ok!");
+//   console.log("ok!");
   return result;
 
 }

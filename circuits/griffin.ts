@@ -17,11 +17,18 @@ function griffinPermutation(inp: bigint[], N: number): bigint[] {
     // Process permutations in groups of 3
     const aux_output: bigint[] = new Array(N + 2);
     for (let i = 0; i < N; i += 3) {
+        console.log("aux[i]:", aux[i]);
+        console.log("aux[i + 1]:", aux[i + 1]);
+        console.log("aux[i + 2]:", aux[i + 2]);
+        
         const permInput = [aux[i], aux[i + 1], aux[i + 2]];
         const permOutput = permutation(permInput);
         aux_output[i] = permOutput[0];
         aux_output[i + 1] = permOutput[1];
         aux_output[i + 2] = permOutput[2];
+        console.log("aux_output[i]:", aux_output[i]);
+        console.log("aux_output[i + 1]:", aux_output[i + 1]); 
+        console.log("aux_output[i + 2]:", aux_output[i + 2]);
     }
 
     // Copy to output array

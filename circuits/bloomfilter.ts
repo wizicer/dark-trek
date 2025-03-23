@@ -89,7 +89,7 @@ function getPositionsNum(positions: bigint[], pk: bigint, salt: bigint): bigint[
     
     // Convert concatenated bits back to numbers
     const positionsNum = positionsConcat.map(bits => bitsToBigNum(bits));
-    console.log("positionsNum", positionsNum);
+    // console.log("positionsNum", positionsNum);
     
     return positionsNum;
 }
@@ -97,7 +97,8 @@ function getPositionsNum(positions: bigint[], pk: bigint, salt: bigint): bigint[
 function bloom_filter(bloom_filter: BloomFilterPathPoint): bigint {
     // First convert points to positions array
     const positions = pathPoints2U64Array(bloom_filter.points, bloom_filter.mapWidth);
-    
+    console.log("positions", positions);
+
     // Get pk and salt from first point (they should be same for all points)
     const pk = bloom_filter.pk;
     const salt = bloom_filter.salt;
@@ -106,7 +107,8 @@ function bloom_filter(bloom_filter: BloomFilterPathPoint): bigint {
 
     // Convert to position numbers using getPositionsNum
     let positions_num = getPositionsNum(positions, pk, salt);
-
+    console.log("positions_num", positions_num);
+    
     // Call griffinPermutation with the positions array length
     const griffin_output = griffinPermutation(positions_num, POINT_NUM);
     console.log("griffin_output", griffin_output);
@@ -165,10 +167,10 @@ function bloom_filter(bloom_filter: BloomFilterPathPoint): bigint {
 function testBloomFilter() {
     // Create test points
     const testPoints: BloomFilterPathPoint = {
-        points: [{x: 1, y: 0}, {x: 2, y: 0}, {x: 3, y: 0}],
-        pk: 2n,
+        points: [{x: 42, y: 0}, {x: 62, y: 0}, {x: 82, y: 0}],
+        pk: 1277361612164999409921959011836272792536924879641n,
         salt: 1n,
-        mapWidth: 3,
+        mapWidth: 20,
         mmic_round: 2
     };
 
