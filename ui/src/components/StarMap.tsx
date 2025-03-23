@@ -15,7 +15,7 @@ import { ConnectButton } from "./ConnectButton";
 import { useWallet } from "../hooks/useWallet.ts";
 import { GameAbi__factory } from "../contracts/index.ts";
 import { getRevealProof, MAP_WIDTH } from "../services/gameProof.ts";
-import { getCommitment } from "../services/positionCommitment.ts";
+import { getCommitment, getFullPointsFromKeyPoints } from "../services/positionCommitment.ts";
 import { StatusOverlay } from "./StatusOverlay";
 
 const SALT = 1n;
@@ -268,9 +268,12 @@ export const StarMap = () => {
     async (id: number) => {
       const army = armies.find((a) => a.id === id);
       if (!army) return;
-      const points = [{x:army.x, y:army.y}, ...(army.movingTo??[])]
-        .map(p => ({ x: p.x/100, y: p.y/100 }))
-        .map((a) => BigInt(a.x + a.y * MAP_WIDTH));
+      const points = getFullPointsFromKeyPoints(
+        [{ x: army.x, y: army.y }, ...(army.movingTo ?? [])].map((a) => ({
+          x: a.x / 100,
+          y: a.y / 100,
+        }))
+      ).map((a) => BigInt(a.x + a.y * MAP_WIDTH));
       setStatusMessage("Generating proof...");
 
       try {
