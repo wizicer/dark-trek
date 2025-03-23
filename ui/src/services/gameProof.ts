@@ -31,6 +31,17 @@ export async function getRevealProof(
     .fill(0n)
     .map((_, i) => (i >= points.length ? 0n : points[i]));
 
+const debugObj = {
+    positions,
+    commitment,
+    duration,
+    pk,
+    salt,
+    target_occupied,
+  };
+
+  console.log("prove:", JSON.stringify(debugObj));
+
   const { proof, publicSignals } = await window.snarkjs.groth16.fullProve(
     {
       positions,
