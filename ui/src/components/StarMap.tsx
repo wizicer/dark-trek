@@ -1,5 +1,5 @@
 import { Stage, Container, Graphics } from "@pixi/react";
-import React, { useCallback, useState, useEffect } from "react";
+import React, { useCallback, useState, useEffect, useRef } from "react";
 import { Planet } from "./Planet.tsx";
 import { PlanetDialog } from "./PlanetDialog.tsx";
 import { Army } from "./Army.tsx";
@@ -40,6 +40,7 @@ export const StarMap = () => {
   const game = GameAbi__factory.connect(contract, signer!);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [lastRetrieveInfoFromContract, setLastRetrieveInfoFromContract] = useState<number>(0);
+  const tryFetchingId = useRef(0);
 
   const [planets, setPlanets] = useState<PlanetData[]>([
     { id: 1, x: 200, y: 200, radius: 30, playerId: 0, energy: 400 },
@@ -124,8 +125,13 @@ export const StarMap = () => {
 
   useEffect(() => {
     if (!address || !game || !currentPlayerId || isConnecting) return;
-    if (Date.now() - lastRetrieveInfoFromContract < 10000) return;
-    setLastRetrieveInfoFromContract(Date.now());
+    if (tryFetchingId.current > 0) return;
+    const threadId = Math.floor(Math.random() * 100000);
+    if (Date.now() - lastRetrieveInfoFromContract < 60000) return;
+
+    if (tryFetchingId.current === 0) tryFetchingId.current = threadId;
+    if (tryFetchingId.current !== threadId) return;
+    
     const fetchStatus = async () => {
       setStatusMessage("Reading status from contract...");
       try {
@@ -195,24 +201,32 @@ export const StarMap = () => {
               });
             }
           } else {
-            const item = searchService.createSearchItem(
-              "A new army movement started"
-            );
-            setSearchItems((prev) => [...prev, item]);
+            const existingItem = searchItems.find((x) => x.armyId === i);
+            if (!existingItem) {
+              const item = searchService.createSearchItem(
+                "A new army movement started",
+                i
+              );
+              setSearchItems((prev) => [...prev, item]);
+            }
           }
         }
         
         if (hasChanges) {
           setArmies(updatedArmies);
         }
+
+        setLastRetrieveInfoFromContract(Date.now());
       } catch (error) {
         console.warn("Error reading status from contract:", error);
         setLastRetrieveInfoFromContract(0);
       }
+
       setStatusMessage(null);
+      tryFetchingId.current = 0;
     };
     fetchStatus();
-  }, [game, address, currentPlayerId, planets, armies, lastRetrieveInfoFromContract, isConnecting]);
+  }, [game, address, currentPlayerId, planets, armies, lastRetrieveInfoFromContract, isConnecting, searchItems]);
 
   const handleSearchItemUpdate = useCallback((item: SearchItem) => {
     searchService.updateSearchItem(item);

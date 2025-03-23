@@ -5,6 +5,7 @@ export interface SearchPoint {
 
 export interface SearchItem {
   id: number;
+  armyId: number;
   message: string;
   searchLevel: number;
   isSearching: boolean;

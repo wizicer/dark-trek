@@ -64,9 +64,10 @@ export class SearchService {
     return points;
   }
 
-  createSearchItem(message: string): SearchItem {
+  createSearchItem(message: string, armyId: number): SearchItem {
     const item: SearchItem = {
       id: this.nextId++,
+      armyId,
       message,
       searchLevel: 1,
       isSearching: false,
