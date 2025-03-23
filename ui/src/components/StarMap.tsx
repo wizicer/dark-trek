@@ -290,9 +290,11 @@ export const StarMap = () => {
       setStatusMessage("Generating proof...");
 
       try {
+        const tmppoints = getFullPointsFromKeyPoints([{x:army.x, y:army.y}, ...(army.movingTo ?? [])].map(p => ({ x: p.x/100, y: p.y/100 })));
+        const commitment = getCommitment(tmppoints, SALT, BigInt(address!));
         const proof = await getRevealProof(
           points,
-          army.commitment!,
+          commitment,
           100n,
           BigInt(address!),
           SALT,
@@ -383,7 +385,7 @@ export const StarMap = () => {
       // Create a new army from the planet
       const planet = planets.find((p) => p.id === selectedPlanet);
       if (planet) {
-        const points = [{x:planet.x, y:planet.y}, ...pathPoints].map(p => ({ x: p.x/100, y: p.y/100 }));
+        const points = getFullPointsFromKeyPoints([{x:planet.x, y:planet.y}, ...pathPoints].map(p => ({ x: p.x/100, y: p.y/100 })));
         const commitment = getCommitment(
           points,
           SALT,
