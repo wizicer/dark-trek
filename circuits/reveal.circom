@@ -214,6 +214,8 @@ template Reveal(POINT_NUM, MAP_WIDTH, MIMC_ROUND) {
         bits_to_num[0][i].in <== hash_to_bits[0][i];
         bits_to_num[0][i].out ==> bits_to_index[0][i];
 
+        // log("bits_to_index[0][i]", bits_to_index[0][i]);
+
         // test_compute_bit_array[bits_to_index[0][i]] = 1;
     }
 
@@ -235,6 +237,7 @@ template Reveal(POINT_NUM, MAP_WIDTH, MIMC_ROUND) {
             bits_to_num[round][i].in <== hash_to_bits[round][i];
             bits_to_num[round][i].out ==> bits_to_index[round][i];
 
+            // log("bits_to_index[round][i]", bits_to_index[round][i]);
             // for test
             // test_compute_bit_array[bits_to_index[round][i]] = 1;
         }
