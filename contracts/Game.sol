@@ -39,13 +39,14 @@ contract Game is IGame {
         uint commitment,
         uint energy
     ) external returns (uint armyId) {
+        require(planetEnergy[sourcePlanet] >= energy, "Not enough energy");
         armyCounter++;
         armyId = armyCounter;
         armyOwner[armyId] = msg.sender;
         armyCommitment[armyId] = commitment;
         armyEnergy[armyId] = energy;
         armyStartBlockNumber[armyId] = block.number;
-        planetEnergy[sourcePlanet] -= energy;
+        // planetEnergy[sourcePlanet] -= energy;
         return armyId;
     }
 
