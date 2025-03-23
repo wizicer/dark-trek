@@ -91,13 +91,13 @@ template Reveal(POINT_NUM, MAP_WIDTH, MIMC_ROUND) {
     signal positions_concat[POINT_NUM][254];
     for (var i = 0; i < POINT_NUM; i++){
         for (var j = 0; j < 64; j++){
-            positions_concat[i][j] <== positions_bits[i][j];
+            positions_concat[i][j] <== positions_mask[i] * positions_bits[i][j];
         }
         for (var j = 0; j < 160; j++){
-            positions_concat[i][j + 64] <== pk_bits[j];
+            positions_concat[i][j + 64] <== positions_mask[i] * pk_bits[j];
         }
         for (var j = 0; j < 30; j++){
-            positions_concat[i][j + 224] <== salt_bits[j];
+            positions_concat[i][j + 224] <== positions_mask[i] * salt_bits[j];
         }
     }
 
@@ -291,10 +291,11 @@ template Reveal(POINT_NUM, MAP_WIDTH, MIMC_ROUND) {
     bits2num.out ==> bit_array_num;
     log("bit_array_num", bit_array_num);
     log("commitment", commitment);
+    // log("bit_array_num", bit_array_num - 21888242871839275222246405745257275088548364400416034343698204186575808495617);
     // check if bit_array_num is equal to commitment
-    signal result <== IsZero()(bit_array_num - commitment);
-    result === 0;
-    // bit_array_num === commitment;
+    // signal result <== IsZero()(bit_array_num - commitment);
+    // result === 0;
+    bit_array_num === commitment;
 
 
     //------------------------------------------------------------------------------
